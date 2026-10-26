@@ -1,13 +1,15 @@
 {
   "name": "Ringgit Ledger",
   "short_name": "Ledger",
-  "description": "Daily spending tracker",
+  "description": "Daily spending tracker for Malaysian ringgit",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#07070d",
-  "theme_color": "#07070d",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "categories": ["finance", "productivity"],
   "icons": [
     {
       "src": "icon-192.png",
@@ -22,7 +24,7 @@
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "icon-512-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

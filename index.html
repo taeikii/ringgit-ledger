@@ -15,7 +15,7 @@
 :root{
   color-scheme:dark;
   --bg:#000;--panel:#070707;--line:#1b1b1b;--line2:#282828;
-  --ink:#fff;--mute:#8a8a8a;--dim:#5e5e5e;
+  --ink:#fff;--mute:#a6a6a6;--dim:#808080;
   --acc:#4d9bff;--acc-soft:rgba(77,155,255,.13);
   --sans:'Silkscreen',system-ui,sans-serif;
   --mono:'Silkscreen',ui-monospace,monospace;
@@ -36,18 +36,18 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 .tabs button.on{color:var(--acc);border-color:var(--acc);background:var(--acc-soft);box-shadow:0 0 18px rgba(77,155,255,.15)}
 .panel{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:18px;margin-bottom:12px}
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.label{font:400 10px var(--mono);letter-spacing:.08em;color:var(--mute);text-transform:uppercase}
-.chip{font:500 10px var(--mono);letter-spacing:.12em;color:#a8a8a8;border:1px solid var(--line2);padding:4px 8px;border-radius:4px;white-space:nowrap;text-transform:uppercase}
+.label{font:400 10px var(--mono);letter-spacing:.07em;color:var(--mute);text-transform:uppercase}
+.chip{font:500 10px var(--mono);letter-spacing:.1em;color:#b4b4b4;border:1px solid var(--line2);padding:4px 8px;border-radius:4px;white-space:nowrap;text-transform:uppercase}
 .big{font:400 clamp(36px,12.4vw,62px)/1.08 var(--mono);letter-spacing:0;color:var(--acc);margin:16px 0 18px;text-shadow:0 0 34px rgba(77,155,255,.3);overflow-wrap:anywhere}
 .hero.over .big{color:#fff;text-shadow:none}
 .bar{height:6px;background:#151515;border-radius:3px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--acc);border-radius:3px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
 .bar.over i{background:#fff}
-.kv{display:flex;justify-content:space-between;font:400 10px var(--mono);letter-spacing:.08em;color:#8f8f8f;margin-top:8px;text-transform:uppercase}
+.kv{display:flex;justify-content:space-between;font:400 10px var(--mono);letter-spacing:.06em;color:#a6a6a6;margin-top:8px;text-transform:uppercase}
 .tag{display:inline-block;font:700 10px var(--mono);letter-spacing:.12em;padding:5px 8px;border-radius:3px;text-transform:uppercase}
 .tag.over{background:#fff;color:#000}
 .tag.quiet{border:1px solid var(--line2);color:var(--mute)}
-.tmrow{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;font:400 9.5px var(--mono);letter-spacing:.12em;color:var(--mute);text-transform:uppercase}
+.tmrow{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;font:400 10px var(--mono);letter-spacing:.1em;color:var(--mute);text-transform:uppercase}
 .tmrow b{font:400 12px var(--mono);color:#fff;letter-spacing:.02em}
 .tmrow.over b{color:#fff}
 .leader{display:flex;align-items:baseline;gap:10px;margin-top:14px;padding-top:12px;border-top:1px dashed #232323;font:400 11px var(--mono);letter-spacing:.08em;color:#9d9d9d;text-transform:uppercase}
@@ -61,7 +61,7 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 .miniTag.under{border-color:rgba(77,155,255,.5);color:var(--acc)}
 .miniTag.over{background:#fff;color:#000;border-color:#fff}
 .num2{font:500 clamp(18px,5vw,25px)/1.1 var(--mono);letter-spacing:-.02em;margin:11px 0 12px;overflow-wrap:anywhere}
-.sub{font:400 8.5px var(--mono);letter-spacing:.02em;color:#7c7c7c;margin-top:8px;display:flex;justify-content:space-between;gap:6px;text-transform:uppercase;white-space:nowrap;overflow:hidden}
+.sub{font:400 9px var(--mono);letter-spacing:.01em;color:#9a9a9a;margin-top:8px;display:flex;justify-content:space-between;gap:6px;text-transform:uppercase;white-space:nowrap;overflow:hidden}
 .alloc .arow{display:flex;align-items:center;gap:9px;padding:12px 0;cursor:pointer;border-radius:4px}
 .alloc .arow:first-of-type{padding-top:4px}
 .sq{width:7px;height:7px;border-radius:1px;background:var(--acc);flex:none}
@@ -90,14 +90,14 @@ input:focus,select:focus,textarea:focus,button:focus-visible,summary:focus-visib
 .stat:last-child{border-bottom:0}
 .stat b{font:500 12px var(--mono);color:#fff;letter-spacing:.02em}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;max-width:348px;margin:0 auto}
-.wk{text-align:center;font:500 9px var(--mono);color:#5f5f5f;padding-bottom:2px;letter-spacing:.1em}
+.wk{text-align:center;font:500 9px var(--mono);color:#808080;padding-bottom:2px;letter-spacing:.1em}
 .cd{aspect-ratio:1;border:1px solid #161616;border-radius:4px;background:#050505;display:flex;align-items:flex-start;justify-content:flex-start;padding:5px;font:500 10px var(--mono);color:#c9c9c9;cursor:pointer;position:relative}
 .cd:active{border-color:var(--acc)}
 .cd.f{opacity:.3;cursor:pointer}
 .cd.e{visibility:hidden}
 .cd.t{background:var(--acc)!important;border-color:var(--acc);color:#000;font-weight:700}
-.cd .bm{position:absolute;right:5px;bottom:5px;width:4px;height:4px;background:#fff;border-radius:1px}
-.calnote{display:flex;align-items:center;gap:8px;margin-top:10px;font:400 8px var(--mono);letter-spacing:.12em;color:#5e5e5e;text-transform:uppercase}
+.cd .bm{position:absolute;right:6px;bottom:6px;width:4px;height:4px;background:#fff;border-radius:1px}
+.calnote{display:flex;align-items:center;gap:8px;margin-top:10px;font:400 8.5px var(--mono);letter-spacing:.1em;color:#7d7d7d;text-transform:uppercase}
 .calnote .bm{display:inline-block;width:4px;height:4px;background:#fff;border-radius:1px}
 .calnote .lg{display:inline-flex;align-items:center;gap:5px;margin-left:auto}
 details.dt{border-top:1px solid #161616;padding:10px 0}
@@ -113,8 +113,8 @@ details.dt summary b{color:#fff;font-weight:500}
 .txl{min-width:0;overflow-wrap:anywhere;color:#e2e2e2}
 .txl .cat{text-transform:uppercase;letter-spacing:.04em}
 .txr{white-space:nowrap;display:flex;align-items:center;gap:4px;color:#fff}
-.txd{color:#666;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase}
-.bulk{font:700 7.5px var(--mono);letter-spacing:.1em;border:1px solid #333;color:#8a8a8a;padding:2px 4px;border-radius:2px;text-transform:uppercase}
+.txd{color:#8a8a8a;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.bulk{font:700 8px var(--mono);letter-spacing:.08em;border:1px solid #3a3a3a;color:#a6a6a6;padding:2px 4px;border-radius:2px;text-transform:uppercase}
 .x{background:none;border:0;color:#4f4f4f;font:400 12px var(--mono);padding:2px 6px;cursor:pointer}
 .x:hover{color:#fff}
 details.sec{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:16px 18px;margin-bottom:12px}

@@ -47,12 +47,19 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 .tag{display:inline-block;font:700 10px var(--mono);letter-spacing:.12em;padding:5px 8px;border-radius:3px;text-transform:uppercase}
 .tag.over{background:#fff;color:#000}
 .tag.quiet{border:1px solid var(--line2);color:var(--mute)}
+.tmrow{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;font:400 9.5px var(--mono);letter-spacing:.12em;color:var(--mute);text-transform:uppercase}
+.tmrow b{font:400 12px var(--mono);color:#fff;letter-spacing:.02em}
+.tmrow.over b{color:#fff}
 .leader{display:flex;align-items:baseline;gap:10px;margin-top:14px;padding-top:12px;border-top:1px dashed #232323;font:400 11px var(--mono);letter-spacing:.08em;color:#9d9d9d;text-transform:uppercase}
 .leader i{flex:1;border-bottom:1px dotted #333;transform:translateY(-3px)}
 .leader b{color:#fff;font-weight:500;letter-spacing:.04em}
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 .duo>*{min-width:0}
 .duo .panel{margin:0;padding:15px}
+.num2.over{color:#fff}
+.miniTag{font:400 8px var(--mono);letter-spacing:.12em;padding:3px 5px;border-radius:2px;border:1px solid var(--line2);color:var(--mute)}
+.miniTag.under{border-color:rgba(77,155,255,.5);color:var(--acc)}
+.miniTag.over{background:#fff;color:#000;border-color:#fff}
 .num2{font:500 clamp(18px,5vw,25px)/1.1 var(--mono);letter-spacing:-.02em;margin:11px 0 12px;overflow-wrap:anywhere}
 .sub{font:400 8.5px var(--mono);letter-spacing:.02em;color:#7c7c7c;margin-top:8px;display:flex;justify-content:space-between;gap:6px;text-transform:uppercase;white-space:nowrap;overflow:hidden}
 .alloc .arow{display:flex;align-items:center;gap:9px;padding:12px 0;cursor:pointer;border-radius:4px}
@@ -89,6 +96,10 @@ input:focus,select:focus,textarea:focus,button:focus-visible,summary:focus-visib
 .cd.f{opacity:.3;cursor:pointer}
 .cd.e{visibility:hidden}
 .cd.t{background:var(--acc)!important;border-color:var(--acc);color:#000;font-weight:700}
+.cd .bm{position:absolute;right:5px;bottom:5px;width:4px;height:4px;background:#fff;border-radius:1px}
+.calnote{display:flex;align-items:center;gap:8px;margin-top:10px;font:400 8px var(--mono);letter-spacing:.12em;color:#5e5e5e;text-transform:uppercase}
+.calnote .bm{display:inline-block;width:4px;height:4px;background:#fff;border-radius:1px}
+.calnote .lg{display:inline-flex;align-items:center;gap:5px;margin-left:auto}
 details.dt{border-top:1px solid #161616;padding:10px 0}
 details.dt:first-of-type{border-top:0}
 details.dt summary{display:flex;justify-content:space-between;gap:10px;cursor:pointer;list-style:none;font:500 10px var(--mono);letter-spacing:.1em;color:#c9c9c9;text-transform:uppercase}
@@ -237,7 +248,7 @@ function calc(){
  const ws=Math.max(1,day-dow),we=Math.min(dim,day+6-dow);
  return {key,hasIncome:hat,inc,budget,bud,tx,dim,isCur,isPast,day,left,allow,today:daily(day,day),
   before,total,bulkAll,spent,daily,bulkSum,ws,we,
-  weekSpent:daily(ws,we),weekLimit:Math.max(Math.round((budget-bulkAll)/dim*(we-ws+1)),0),
+  weekSpent:daily(ws,we),weekToDate:spent(ws,day),weekExpected:Math.round(budget*(day-ws+1)/dim),weekElapsed:day-ws+1,weekDays:we-ws+1,weekDaysLeft:Math.max(we-day+1,0),weekLimit:Math.max(Math.round((budget-bulkAll)/dim*(we-ws+1)),0),
   monthLeft:budget-total,pace:Math.round(budget*day/dim)-total};
 }
 
@@ -296,9 +307,9 @@ function txRow(t,withDate){
 
 function tmHTML(c){
  const tm=allowOn(c.day+1);
- if(tm===null)return `<div class="leader"><span>Tomorrow</span><i></i><b>new month</b></div>`;
+ if(tm===null)return `<div class="tmrow"><span>Tomorrow</span><b>new month</b></div>`;
  const over=tm<=0;
- return `<div class="leader ${over?'over':''}"><span>Tomorrow</span><i></i><b style="${over?'color:#fff':''}">${rmS(Math.max(tm,0))}</b></div>`;
+ return `<div class="tmrow ${over?'over':''}"><span>Tomorrow</span><b>${rmS(Math.max(tm,0))}</b></div>`;
 }
 
 function heroHTML(c){
@@ -320,13 +331,11 @@ function heroHTML(c){
  const shown=Math.max(c.allow-c.today,0);
  const over=c.today>c.allow||(c.allow<=0&&c.today>0);
  const keep=c.allow>0?Math.max(c.allow-c.today,0)/c.allow:0;
- const pt=c.pace>=0?`${rmS(c.pace)} UNDER PACE`:`${rmS(-c.pace)} OVER PACE`;
  return `<section class="panel hero ${over?'over':''}">
   <div class="row"><span class="label">You can spend today</span><span class="chip">${c.left} DAY${c.left===1?'':'S'} LEFT</span></div>
   <div class="big" id="hero" data-to="${shown}">${rmS(shown)}</div>
   <div class="bar ${over?'over':''}"><i style="width:${Math.round(keep*100)}%"></i></div>
   <div class="kv"><span>SPENT ${rmS(c.today)} / ${rmS(Math.max(c.allow,0))}</span><span>DAY ${c.day}/${c.dim}</span></div>
-  <div style="margin-top:14px"><span class="tag ${c.pace<0?'over':'quiet'}">${pt}</span></div>
   ${tmHTML(c)}</section>`;
 }
 
@@ -366,12 +375,23 @@ function allocHTML(c){
   }).join('')}</section>`;
 }
 
+function weekCardHTML(c){
+ const n=c.weekDaysLeft;
+ const val=Math.max(Math.min(c.allow*n,Math.max(c.monthLeft,0)),0);
+ const end=new Date(Y,M,c.we);
+ const endLabel=end.toLocaleDateString('en-GB',{weekday:'short'}).toUpperCase()+' '+end.getDate();
+ return `<section class="panel"><div class="row"><span class="label">Left this week</span></div>
+  <div class="num2">${rmS(val)}</div>
+  <div class="bar" style="background:transparent" aria-hidden="true"></div>
+  <div class="sub"><span>${n} DAY${n===1?'':'S'} LEFT</span><span>TO ${endLabel}</span></div></section>`;
+}
+
 function homeHTML(c){
  let h='';
  if(!c.hasIncome&&c.inc===0)h+=bannerHTML(c);
  else h+=heroHTML(c);
  if(c.isCur){
-  h+=`<div class="duo">${cardHTML('Left this week',c.weekSpent,c.weekLimit)}${cardHTML('Left this month',c.total,c.budget)}</div>`;
+  h+=`<div class="duo">${weekCardHTML(c)}${cardHTML('Left this month',c.total,c.budget)}</div>`;
  }
  h+=allocHTML(c);
  h+=`<button class="cta" data-a="add" style="margin-top:2px">+ Add expense</button>`;
@@ -395,17 +415,19 @@ function recapHTML(c){
 
 function calHTML(c){
  const off=(new Date(Y,M,1).getDay()+6)%7;
- const base=c.dim?c.budget/c.dim:0;
+ const peak=Math.max.apply(null,Array.from({length:c.dim},(_,i)=>c.spent(i+1,i+1)).concat([0]));
  let cells='';
  for(let d=1;d<=c.dim;d++){
-  const v=c.daily(d,d),fut=c.isCur?d>c.day:new Date(Y,M,d)>now,tod=c.isCur&&d===c.day;
-  const q=base>0?Math.min(v/base,1.2):0;
-  const bg=(v>0&&!fut&&!tod)?`background:rgba(77,155,255,${(0.08+q*0.34).toFixed(2)})`:'';
-  cells+=`<div class="cd ${fut?'f':''} ${tod?'t':''}" data-a="day" data-d="${c.key}-${pad(d)}" role="button" tabindex="0" aria-label="Day ${d}${fut?', upcoming':v?', '+rmS(v)+' spent':', no spend'}" ${bg?`style="${bg}"`:''}><span>${d}</span></div>`;
+  const v=c.spent(d,d),bv=c.bulkSum(d,d),fut=c.isCur?d>c.day:new Date(Y,M,d)>now,tod=c.isCur&&d===c.day;
+  const bulkDay=v>0&&bv/v>=0.5;
+  const q=peak>0?v/peak:0;
+  const bg=(v>0&&!fut&&!tod)?`background:rgba(77,155,255,${(0.08+q*0.44).toFixed(2)})`:'';
+  cells+=`<div class="cd ${fut?'f':''} ${tod?'t':''}" data-a="day" data-d="${c.key}-${pad(d)}" role="button" tabindex="0" aria-label="Day ${d}${fut?', upcoming':v?', '+rmS(v)+' spent':', no spend'}" ${bg?`style="${bg}"`:''}><span>${d}</span>${bulkDay?'<i class="bm"></i>':''}</div>`;
  }
  return `<section class="panel">
   <div class="row" style="margin-bottom:12px"><span class="label">${c.isCur?'This month':'Calendar'}</span><span class="chip">TAP A DAY TO LOG</span></div>
-  <div class="cal">${'MTWTFSS'.split('').map(l=>`<div class="wk">${l}</div>`).join('')}${Array.from({length:off},()=>'<div class="cd e"></div>').join('')}${cells}</div></section>`;
+  <div class="cal">${'MTWTFSS'.split('').map(l=>`<div class="wk">${l}</div>`).join('')}${Array.from({length:off},()=>'<div class="cd e"></div>').join('')}${cells}</div>
+  <div class="calnote"><span>TOTAL SPENT / DAY</span><span class="lg"><i class="bm"></i>MOSTLY BULK</span></div></section>`;
 }
 
 function weeksHTML(c){

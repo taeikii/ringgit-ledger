@@ -377,14 +377,11 @@ function allocHTML(c){
 }
 
 function weekCardHTML(c){
- const n=c.weekDaysLeft;
- const val=Math.max(Math.min(c.allow*n,Math.max(c.monthLeft,0)),0);
- const end=new Date(Y,M,c.we);
- const endLabel=end.toLocaleDateString('en-GB',{weekday:'short'}).toUpperCase()+' '+end.getDate();
- return `<section class="panel"><div class="row"><span class="label">Left this week</span></div>
-  <div class="num2">${rmS(val)}</div>
+ const exp=c.weekExpected,spent=c.weekToDate,d=exp-spent,over=d<0;
+ return `<section class="panel"><div class="row"><span class="label">This week</span><span class="miniTag ${over?'over':'under'}">${over?'OVER PACE':'UNDER PACE'}</span></div>
+  <div class="num2 ${over?'over':''}">${rmS(Math.abs(d))}</div>
   <div class="bar" style="background:transparent" aria-hidden="true"></div>
-  <div class="sub"><span>${n} DAY${n===1?'':'S'} LEFT</span><span>TO ${endLabel}</span></div></section>`;
+  <div class="sub"><span>SPENT ${rmS(spent).replace('RM ','')}</span><span>${c.weekElapsed}/${c.weekDays}</span></div></section>`;
 }
 
 function homeHTML(c){

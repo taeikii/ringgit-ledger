@@ -88,6 +88,9 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 .wadd input{padding:9px 10px;font-size:11px}
 .fxadd button{background:var(--acc);color:#000;border:0;border-radius:4px;font-weight:700;cursor:pointer;font-size:9px;letter-spacing:.1em}
 .wadd button{padding:0 12px;font-size:9px;letter-spacing:.1em;background:var(--acc);color:#000;border:0;border-radius:4px;font-weight:700;cursor:pointer}
+.cardfoot{display:flex;justify-content:flex-end;margin-top:12px}
+.plus{width:34px;height:34px;padding:0;display:grid;place-items:center;border:1px solid var(--line2);background:#0b0b0b;color:var(--acc);border-radius:6px;font:400 18px/1 var(--mono);cursor:pointer}
+.plus:hover,.plus:active{border-color:var(--acc);background:var(--acc-soft)}
 .cta{width:100%;height:52px;background:var(--acc);color:#000;border:0;border-radius:8px;font:700 12px var(--mono);letter-spacing:.18em;cursor:pointer;box-shadow:0 0 28px rgba(77,155,255,.25);text-transform:uppercase}
 .cta:active{transform:scale(.99)}
 .ghost{background:#0b0b0b;border:1px solid var(--line2);color:#d8d8d8;border-radius:6px;padding:10px 14px;font:500 10px var(--mono);letter-spacing:.12em;cursor:pointer;text-transform:uppercase}
@@ -233,7 +236,7 @@ const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const now=new Date();
 let Y=now.getFullYear(),M=now.getMonth(),view='home',dir=0,first=true;
 let openW={},openS={income:true},bkt='n';
-let sheetOpen=false,editId=null,sheetDate=null,formBulk=false,prefill=null;
+let sheetOpen=false,editId=null,sheetDate=null,formBulk=false,prefill=null,formOpen=null;
 let selCat=(S.cats.find(c=>c.name===S.lastCat)||S.cats[0]||{name:''}).name;
 let q='',fcat='';
 let toastTimer=null;
@@ -421,18 +424,18 @@ function planHTML(c){
  return `<section class="panel">
    <div class="row"><span class="label">Wishlist</span><span class="chip">${rmS(under)} AVAILABLE</span></div>
    ${S.wish.length?wrows:'<div class="sub" style="margin-top:12px">NOTHING YET</div>'}
-   <div class="wadd"><input id="wname" placeholder="What do you want?" aria-label="Item name"><input id="wprice" type="number" min="0" inputmode="decimal" placeholder="Price" aria-label="Price"><button data-a="waddok">ADD</button></div>
+   <div class="cardfoot"><button class="plus" data-a="form" data-t="wish" aria-label="Add wishlist item">+</button></div>
   </section>
   <section class="panel">
    <div class="row"><span class="label">Fixed monthly</span><span class="chip">${S.fixed.length} ITEM${S.fixed.length===1?'':'S'}</span></div>
    ${S.fixed.length?frows:'<div class="sub" style="margin-top:12px">NOTHING YET</div>'}
-   <div class="fxadd"><input id="fname" placeholder="Transport" aria-label="Fixed item name"><input id="famt" type="number" min="0" inputmode="decimal" placeholder="10.00" aria-label="Amount"><select id="fcat" aria-label="Category">${S.cats.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('')}</select><button data-a="fadd">ADD</button></div>
+   <div class="cardfoot"><button class="plus" data-a="form" data-t="fixed" aria-label="Add fixed item">+</button></div>
   </section>
   <section class="panel">
    <div class="row"><span class="label">Savings</span><span class="chip">${target>0?rmS(target):'OFF'}</span></div>
-   <div class="srow2" style="margin-top:2px"><span>Target</span><input id="goal" type="number" min="0" inputmode="decimal" value="${S.goal}" aria-label="Savings target"></div>
    <div class="bar" style="margin-top:12px"><i style="width:${(spct*100).toFixed(0)}%"></i></div>
    <div class="kv"><span>BUDGET ${rmS(c.budget)}</span><span>${target>0?(below?'BELOW TARGET':'TARGET COVERED'):'NO TARGET'}</span></div>
+   <div class="cardfoot"><button class="plus" data-a="form" data-t="goal" aria-label="Set savings target">+</button></div>
   </section>`;
 }
 
@@ -549,6 +552,21 @@ function setHTML(c){
  return h;
 }
 
+function formSheetHTML(){
+ const t=formOpen;if(!t)return '';
+ const title=t==='wish'?'New wishlist item':t==='fixed'?'New fixed item':'Savings target';
+ let fields='';
+ if(t==='goal')fields=`<input id="f_amt" type="number" min="0" inputmode="decimal" placeholder="0.00" value="${S.goal||''}" aria-label="Target amount">`;
+ else{
+  fields=`<input id="f_name" placeholder="${t==='wish'?'What do you want?':'Name (Transport)'}" aria-label="Name"><input id="f_amt" type="number" min="0" inputmode="decimal" placeholder="${t==='wish'?'Price':'Amount'}" aria-label="Amount">`;
+  if(t==='fixed')fields+=`<select id="f_cat" aria-label="Category">${S.cats.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('')}</select>`;
+ }
+ return `<div class="sheet" id="fsheet"><div class="panel" role="dialog" aria-modal="true">
+  <div class="row"><span class="label">${title}</span><button class="x" data-a="fcancel" aria-label="Close">✕</button></div>
+  <div class="form" style="margin-top:14px">${fields}<button class="cta" data-a="fsave">Save</button></div>
+ </div></div>`;
+}
+
 function sheetHTML(c){
  const t=editId?S.tx.find(x=>x.id===editId):null;
  const dv=sheetDate||(c.isCur?fmt(now):c.key+'-01');
@@ -580,11 +598,12 @@ function render(){
  else if(view==='bucket')h=bucketHTML(c);
  else h=setHTML(c);
  if(sheetOpen)h+=sheetHTML(c);
+ if(formOpen)h+=formSheetHTML();
  const app=document.getElementById('app');
  app.innerHTML=h;
  app.className=dir>0?'inR':dir<0?'inL':'';
  dir=0;
- document.body.style.overflow=sheetOpen?'hidden':'';
+ document.body.style.overflow=(sheetOpen||formOpen)?'hidden':'';
  if(sheetOpen){
   updateWhatif();
   setTimeout(()=>{const a=document.getElementById('amt');if(a){a.focus();if(a.select)a.select()}},30);
@@ -703,14 +722,6 @@ function setIncomeNow(v){
  save();render();showToast('Income set for '+monthLabel());
 }
 
-function addFixed(){
- const n=(document.getElementById('fname').value||'').trim();
- const a=parseFloat(document.getElementById('famt').value);
- const cat=document.getElementById('fcat').value;
- if(!n||!(a>0)){showToast('Name and amount needed');return}
- S.fixed.push({id:uid(),name:n,amt:Math.round(a*100)/100,cat});
- save();render();showToast('Added to fixed');
-}
 
 function addCat(){
  const el=document.getElementById('ncat'),n=(el.value||'').trim(),b=document.getElementById('nbk').value;
@@ -796,10 +807,20 @@ function onAppClick(e){
  if(a==='bback'){go('home',-1);return}
  if(a==='day'){openAdd(el.dataset.d);return}
  if(a==='add'){openAdd(null);return}
- if(a==='waddok'){
-  const n=(document.getElementById('wname').value||'').trim(),p=parseFloat(document.getElementById('wprice').value);
-  if(!n||!(p>0)){showToast('Name and price needed');return}
-  S.wish.push({id:uid(),name:n,price:Math.round(p*100)/100});save();render();return;
+ if(a==='form'){formOpen=el.dataset.t;render();return}
+ if(a==='fcancel'){formOpen=null;render();return}
+ if(a==='fsave'){
+  const amtEl=document.getElementById('f_amt'),num=amtEl?parseFloat(amtEl.value):NaN;
+  if(formOpen==='goal'){
+   if(isNaN(num)||num<0){showToast('Enter a target');return}
+   S.goal=Math.round(num*100)/100;
+  }else{
+   const nameEl=document.getElementById('f_name'),name=nameEl?(nameEl.value||'').trim():'';
+   if(!name||!(num>0)){showToast('Name and amount needed');return}
+   if(formOpen==='wish')S.wish.push({id:uid(),name,price:Math.round(num*100)/100});
+   else S.fixed.push({id:uid(),name,amt:Math.round(num*100)/100,cat:(document.getElementById('f_cat')||{}).value||''});
+  }
+  formOpen=null;save();render();showToast('Saved');return;
  }
  if(a==='wdel'){S.wish=S.wish.filter(w=>w.id!==el.dataset.id);save();render();return}
  if(a==='fbuy'){
@@ -815,7 +836,6 @@ function onAppClick(e){
  if(a==='back'){go('home',-1);return}
  if(a==='mprev'){shiftMonth(-1);return}
  if(a==='mnext'){shiftMonth(1);return}
- if(a==='fadd'){addFixed();return}
  if(a==='fdel'){
   S.fixed=S.fixed.filter(f=>f.id!==el.dataset.id);save();render();showToast('Fixed cost removed');return;
  }
@@ -877,7 +897,7 @@ app.addEventListener('toggle',e=>{
 },true);
 
 document.addEventListener('keydown',e=>{
- if(e.key==='Escape'&&sheetOpen){e.preventDefault();closeSheet()}
+ if(e.key==='Escape'&&(sheetOpen||formOpen)){e.preventDefault();if(sheetOpen)closeSheet();else{formOpen=null;render()}}
 });
 document.getElementById('logo').onclick=()=>go('home',-1);
 document.getElementById('prev').onclick=()=>shiftMonth(-1);

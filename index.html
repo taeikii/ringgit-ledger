@@ -94,14 +94,6 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 .plus:active{opacity:.55}
 .bs{padding:6px 10px;font-size:9px;letter-spacing:.08em}
 .linkbtn{background:none;border:0;color:var(--acc);font:400 9px var(--mono);letter-spacing:.12em;padding:14px 0 2px;cursor:pointer;text-transform:uppercase}
-.rings2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-.ringbtn{background:none;border:0;padding:0;cursor:pointer;color:inherit;font:inherit}
-.ringbox{position:relative;display:block;width:100%;max-width:150px;margin:0 auto;aspect-ratio:1}
-.ringbox svg{position:absolute;inset:0;width:100%;height:100%}
-.rinner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:16px;text-align:center}
-.rinner .pct{font:400 23px/1 var(--mono);color:#fff}
-.rinner .rlbl{display:flex;align-items:center;gap:5px;font:400 8px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#a8a8a8}
-.rinner .ramt{font:400 9.5px var(--mono);color:#fff;letter-spacing:.02em;line-height:1.25}
 .cta{width:100%;height:52px;background:var(--acc);color:#000;border:0;border-radius:8px;font:700 12px var(--mono);letter-spacing:.18em;cursor:pointer;box-shadow:0 0 28px rgba(77,155,255,.25);text-transform:uppercase}
 .cta:active{transform:scale(.99)}
 .ghost{background:#0b0b0b;border:1px solid var(--line2);color:#d8d8d8;border-radius:6px;padding:10px 14px;font:500 10px var(--mono);letter-spacing:.12em;cursor:pointer;text-transform:uppercase}
@@ -392,26 +384,19 @@ function cardHTML(title,sp,lim,span){
 }
 
 function allocHTML(c){
- const SIDE=108,P=SIDE*4;
- const rings=['n','w'].map((k,i)=>{
-  const lim=c.bud[k],used=c.spent(1,c.dim,k),lef=lim-used,over=lef<0;
-  const pct=lim>0?Math.min(Math.max(used/lim,0),1):0;
-  return `<button class="ringbtn" data-a="bkt" data-b="${k}" aria-label="${B[k]}: ${Math.round(pct*100)} percent used, ${rmS(Math.abs(lef))} ${over?'over':'left'}">
-   <span class="ringbox">
-    <svg viewBox="0 0 120 120" aria-hidden="true">
-     <rect x="6" y="6" width="${SIDE}" height="${SIDE}" fill="none" stroke="#1b1b1b" stroke-width="4"/>
-     <rect x="6" y="6" width="${SIDE}" height="${SIDE}" fill="none" stroke="${over?'#fff':'var(--acc)'}" stroke-width="4" stroke-dasharray="${P}" stroke-dashoffset="${(P*(1-pct)).toFixed(1)}"/>
-    </svg>
-    <span class="rinner">
-     <b class="pct">${Math.round(pct*100)}%</b>
-     <span class="rlbl"><i class="sq ${k==='w'?'w':''}"></i>${B[k]}</span>
-     <span class="ramt">${rmS(Math.abs(lef))} ${over?'OVER':'LEFT'}</span>
-    </span>
-   </span>
-  </button>`;
- }).join('');
- return `<section class="panel"><div class="row" style="margin-bottom:2px"><span class="label">Allocation</span><span class="chip">${S.split[0]} / ${S.split[1]}</span></div>
-  <div class="rings2">${rings}</div></section>`;
+ return `<section class="panel"><div class="row" style="margin-bottom:6px"><span class="label">Allocation</span><span class="chip">${S.split[0]} / ${S.split[1]}</span></div>
+  ${['n','w'].map((k,i)=>{
+   const lim=c.bud[k],used=c.spent(1,c.dim,k),lef=lim-used,over=lef<0;
+   const keep=lim>0?Math.max(lef,0)/lim:0;
+   return `<div class="alloc">
+    <div class="arow" data-a="bkt" data-b="${k}" role="button" tabindex="0">
+      <i class="sq ${k==='w'?'w':''}"></i><span class="aname">${B[k]} ${S.split[i]}%</span>
+      <span class="aval">${rmS(lef)}${over?'<span class="mini">OVER</span>':''}</span><span class="chev">\u203a</span>
+    </div>
+    <div class="bar ${over?'over':''}"><i style="width:${(keep*100).toFixed(1)}%"></i></div>
+    <div class="sub"><span>SPENT ${rmS(used)}</span><span>OF ${rmS(lim)}</span></div>
+   </div>`;
+  }).join('')}</section>`;
 }
 
 function weekCardHTML(c){

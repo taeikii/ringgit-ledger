@@ -92,6 +92,8 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 .plus{width:32px;height:32px;padding:0;display:grid;place-items:center;border:0;background:none;color:var(--acc);font:400 20px/1 var(--mono);cursor:pointer;margin:-8px -8px -8px 0}
 .rowend{display:flex;align-items:center;gap:8px;min-width:0}
 .plus:active{opacity:.55}
+.bs{padding:6px 10px;font-size:9px;letter-spacing:.08em}
+.linkbtn{background:none;border:0;color:var(--acc);font:400 9px var(--mono);letter-spacing:.12em;padding:14px 0 2px;cursor:pointer;text-transform:uppercase}
 .cta{width:100%;height:52px;background:var(--acc);color:#000;border:0;border-radius:8px;font:700 12px var(--mono);letter-spacing:.18em;cursor:pointer;box-shadow:0 0 28px rgba(77,155,255,.25);text-transform:uppercase}
 .cta:active{transform:scale(.99)}
 .ghost{background:#0b0b0b;border:1px solid var(--line2);color:#d8d8d8;border-radius:6px;padding:10px 14px;font:500 10px var(--mono);letter-spacing:.12em;cursor:pointer;text-transform:uppercase}
@@ -237,7 +239,7 @@ const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const now=new Date();
 let Y=now.getFullYear(),M=now.getMonth(),view='home',dir=0,first=true;
 let openW={},openS={income:true},bkt='n';
-let sheetOpen=false,editId=null,sheetDate=null,formBulk=false,prefill=null,formOpen=null;
+let sheetOpen=false,editId=null,sheetDate=null,formBulk=false,prefill=null,formOpen=null,restoreOpen=false;
 let selCat=(S.cats.find(c=>c.name===S.lastCat)||S.cats[0]||{name:''}).name;
 let q='',fcat='';
 let toastTimer=null;
@@ -544,15 +546,20 @@ function setHTML(c){
  const mm={};S.tx.forEach(t=>{const k=t.date.slice(0,7);mm[k]=mm[k]||{n:0,sum:0};mm[k].n++;mm[k].sum+=sen(t.amt)});
  const monthRows=Object.keys(mm).sort().reverse().map(k=>{
   const nm=new Date(k+'-01T00:00').toLocaleDateString('en-GB',{month:'short',year:'numeric'});
-  return `<div class="srow2"><span style="flex:1">${nm}</span><span style="color:#8a8a8a;font-size:9px">${mm[k].n} · ${rmS(mm[k].sum)}</span><button class="ghost" data-a="csvm" data-m="${k}" style="padding:6px 10px;font-size:9px">CSV</button></div>`;
+  return `<div class="srow2"><span style="flex:1">${nm}</span><span style="color:#8a8a8a;font-size:9px">${mm[k].n} · ${rmS(mm[k].sum)}</span><button class="ghost bs" data-a="copym" data-m="${k}">COPY</button><button class="ghost bs" data-a="csvm" data-m="${k}">CSV</button></div>`;
  }).join('');
  h+=`<details class="sec" data-sk="data" ${openS.data?'open':''}><summary><span class="label">Data</span><span class="sum">${S.tx.length} ENTRIES</span></summary>
   <div class="sub" style="margin:2px 0 4px">EXPORT BY MONTH</div>
   ${monthRows||'<div class="sub">NO DATA YET</div>'}
-  <div class="srow" style="margin-top:12px"><button class="ghost" data-a="csv" style="flex:1">EXPORT ALL</button><button class="ghost" data-a="cpy" style="flex:1">COPY BACKUP</button></div>
-  <textarea id="bk" rows="3" aria-label="Backup text" style="margin-top:8px"></textarea>
-  <button class="ghost" data-a="rst" style="margin-top:8px;width:100%">RESTORE FROM TEXT</button>
-  <div class="sub" id="bkmsg" role="status" style="margin-top:8px"></div></details>`;
+  <div class="srow2" style="border-top:1px solid #161616;margin-top:8px;padding-top:12px">
+   <span style="flex:1">All months</span>
+   <span style="color:#8a8a8a;font-size:9px">${S.tx.length} · ${rmS(S.tx.reduce((s,t)=>s+sen(t.amt),0))}</span>
+   <button class="ghost bs" data-a="cpya">COPY</button><button class="ghost bs" data-a="csv">CSV</button>
+  </div>
+  ${restoreOpen?`<textarea id="bk" rows="4" aria-label="Backup text" style="margin-top:12px"></textarea>
+   <button class="ghost" data-a="rst" style="margin-top:8px;width:100%">RESTORE</button>
+   <div class="sub" id="bkmsg" role="status" style="margin-top:8px"></div>`:`<button class="linkbtn" data-a="rstopen">RESTORE FROM TEXT</button>`}
+  </details>`;
  h+=`<div class="foot"><span>RINGGIT LEDGER</span><span>V7</span></div>`;
  return h;
 }
@@ -764,6 +771,13 @@ function exportCSV(month){
  }catch(e){showToast('Export failed here')}
 }
 
+async function copyJSON(month){
+ const data=month?Object.assign({},S,{tx:S.tx.filter(t=>t.date.slice(0,7)===month)}):S;
+ const txt=JSON.stringify(data);
+ try{await navigator.clipboard.writeText(txt);showToast(month?'Month copied':'Full backup copied')}
+ catch(e){showToast('Copy blocked \u2014 use CSV')}
+}
+
 async function copyBackup(){
  const t=JSON.stringify(S),ta=document.getElementById('bk');
  ta.value=t;ta.focus();ta.select();
@@ -779,7 +793,7 @@ function restoreBackup(){
   const o=JSON.parse(ta.value);
   if(!o||!Array.isArray(o.tx)||!Array.isArray(o.cats))throw new Error('shape');
   S=Object.assign(fresh(),o);
-  norm();save();sheetOpen=false;render();
+  norm();save();sheetOpen=false;restoreOpen=false;render();
   showToast('Backup restored');
  }catch(e){
   document.getElementById('bkmsg').textContent='Not a valid backup. Paste the full text.';
@@ -855,6 +869,9 @@ function onAppClick(e){
  }
  if(a==='presets'){addPresets();return}
  if(a==='csv'){exportCSV();return}
+ if(a==='copym'){copyJSON(el.dataset.m);return}
+ if(a==='cpya'){copyJSON();return}
+ if(a==='rstopen'){restoreOpen=true;render();return}
  if(a==='csvm'){exportCSV(el.dataset.m);return}
  if(a==='cpy'){copyBackup();return}
  if(a==='rst'){restoreBackup();return}

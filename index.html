@@ -378,10 +378,10 @@ function allocHTML(c){
 
 function weekCardHTML(c){
  const exp=c.weekExpected,spent=c.weekToDate,d=exp-spent,over=d<0;
- return `<section class="panel"><div class="row"><span class="label">This week</span><span class="miniTag ${over?'over':'under'}">${over?'OVER PACE':'UNDER PACE'}</span></div>
+ return `<section class="panel"><div class="row"><span class="label">Pace</span></div>
   <div class="num2 ${over?'over':''}">${rmS(Math.abs(d))}</div>
   <div class="bar" style="background:transparent" aria-hidden="true"></div>
-  <div class="sub"><span>SPENT ${rmS(spent).replace('RM ','')}</span><span>${c.weekElapsed}/${c.weekDays}</span></div></section>`;
+  <div class="sub" style="justify-content:flex-start"><span class="miniTag ${over?'over':'under'}">${over?'OVER PACE':'UNDER PACE'}</span></div></section>`;
 }
 
 function homeHTML(c){

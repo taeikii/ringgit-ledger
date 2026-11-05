@@ -74,6 +74,19 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 .chev{color:#4a4a4a;font-size:14px;line-height:1}
 .alloc .bar{margin:0 0 0 16px}
 .alloc .sub{margin:6px 0 16px 16px}
+.wrow{padding:12px 0;border-bottom:1px solid #141414}
+.wrow:last-of-type{border-bottom:0}
+.wtop{display:flex;align-items:baseline;gap:8px}
+.wname{flex:1;min-width:0;font:400 12px var(--mono);letter-spacing:.04em;text-transform:uppercase;color:#e5e5e5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wprice{font:400 13px var(--mono);color:#fff;white-space:nowrap}
+.wbar{height:5px;background:#151515;border-radius:2px;overflow:hidden;margin:8px 0 8px}
+.wbar i{display:block;height:100%;background:var(--acc);border-radius:2px}
+.wsub{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.wbuy{background:none;border:1px solid var(--line2);color:#dcdcdc;border-radius:4px;padding:5px 10px;font:400 9px var(--mono);letter-spacing:.12em;cursor:pointer}
+.wbuy:hover{border-color:var(--acc);color:var(--acc)}
+.wadd{display:grid;grid-template-columns:1fr 78px auto;gap:6px;margin-top:14px}
+.wadd input{padding:9px 10px;font-size:11px}
+.wadd button{padding:0 12px;font-size:9px;letter-spacing:.1em;background:var(--acc);color:#000;border:0;border-radius:4px;font-weight:700;cursor:pointer}
 .cta{width:100%;height:52px;background:var(--acc);color:#000;border:0;border-radius:8px;font:700 12px var(--mono);letter-spacing:.18em;cursor:pointer;box-shadow:0 0 28px rgba(77,155,255,.25);text-transform:uppercase}
 .cta:active{transform:scale(.99)}
 .ghost{background:#0b0b0b;border:1px solid var(--line2);color:#d8d8d8;border-radius:6px;padding:10px 14px;font:500 10px var(--mono);letter-spacing:.12em;cursor:pointer;text-transform:uppercase}
@@ -188,7 +201,7 @@ const PRESETS=[['Mamak','n'],['Grab','n'],['TnG reload','n'],['Shopee','w'],['PT
 function fresh(){
  return {v:2,income:{},defInc:0,aside:0,goal:0,split:[60,40],
   cats:[{name:'Food',b:'n'},{name:'Transport',b:'n'},{name:'Groceries',b:'n'},{name:'Bills',b:'n'},{name:'Eating out',b:'w'},{name:'Shopping',b:'w'},{name:'Entertainment',b:'w'}],
-  fixed:[],posted:{},tx:[],lastCat:null};
+  fixed:[],posted:{},tx:[],wish:[],lastCat:null};
 }
 let S=fresh();
 function norm(){
@@ -198,6 +211,8 @@ function norm(){
  if(!S.income||typeof S.income!=='object'||Array.isArray(S.income))S.income={};
  if(!S.posted||typeof S.posted!=='object'||Array.isArray(S.posted))S.posted={};
  if(!Array.isArray(S.fixed))S.fixed=[];
+ if(!Array.isArray(S.wish))S.wish=[];
+ S.wish=S.wish.filter(w=>w&&w.name).map(w=>({id:String(w.id||uid()),name:String(w.name),price:Math.round(Math.abs(+w.price||0)*100)/100}));
  if(!Array.isArray(S.tx))S.tx=[];
  if(!Array.isArray(S.cats)||!S.cats.length)S.cats=fresh().cats;
  S.cats=S.cats.filter(c=>c&&typeof c.name==='string'&&c.name.trim()).map(c=>({name:c.name,b:c.b==='n'?'n':'w'}));
@@ -216,7 +231,7 @@ const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const now=new Date();
 let Y=now.getFullYear(),M=now.getMonth(),view='home',dir=0,first=true;
 let openW={},openS={income:true},bkt='n';
-let sheetOpen=false,editId=null,sheetDate=null,formBulk=false;
+let sheetOpen=false,editId=null,sheetDate=null,formBulk=false,prefill=null;
 let selCat=(S.cats.find(c=>c.name===S.lastCat)||S.cats[0]||{name:''}).name;
 let q='',fcat='';
 let toastTimer=null;
@@ -384,6 +399,23 @@ function weekCardHTML(c){
   <div class="sub" style="justify-content:flex-start"><span class="miniTag ${over?'over':'under'}">${over?'OVER PACE':'UNDER PACE'}</span></div></section>`;
 }
 
+function wishHTML(c){
+ const under=Math.max(c.budget*c.day/c.dim-c.total,0);
+ const rows=S.wish.map(w=>{
+  const price=sen(w.price),pct=price>0?Math.min(under/price,1):0,can=under>=price;
+  return `<div class="wrow">
+   <div class="wtop"><span class="wname">${esc(w.name)}</span><span class="wprice">${rmS(sen(w.price))}</span><button class="x" data-a="wdel" data-id="${w.id}" aria-label="Remove ${esc(w.name)}">✕</button></div>
+   <div class="wbar"><i style="width:${(pct*100).toFixed(0)}%"></i></div>
+   <div class="wsub"><span class="miniTag ${can?'under':''}">${can?'CAN BUY':rmS(price-under)+' SHORT'}</span><button class="wbuy" data-a="wbuy" data-id="${w.id}">BUY</button></div>
+  </div>`;
+ }).join('');
+ return `<section class="panel wish">
+  <div class="row"><span class="label">Wishlist</span><span class="chip">${rmS(under)} AVAILABLE</span></div>
+  ${S.wish.length?rows:'<div class="sub" style="margin-top:12px">NOTHING YET</div>'}
+  <div class="wadd"><input id="wname" placeholder="What do you want?" aria-label="Item name"><input id="wprice" type="number" min="0" inputmode="decimal" placeholder="Price" aria-label="Price"><button data-a="waddok">ADD</button></div>
+ </section>`;
+}
+
 function homeHTML(c){
  let h='';
  if(!c.hasIncome&&c.inc===0)h+=bannerHTML(c);
@@ -391,6 +423,7 @@ function homeHTML(c){
  if(c.isCur){
   h+=`<div class="duo">${weekCardHTML(c)}${cardHTML('Left this month',c.total,c.budget)}</div>`;
  }
+ h+=wishHTML(c);
  h+=allocHTML(c);
  h+=`<button class="cta" data-a="add" style="margin-top:2px">+ Add expense</button>`;
  h+=`<div class="foot"><span>${S.tx.length} entries</span><span>v7</span></div>`;
@@ -508,9 +541,9 @@ function sheetHTML(c){
  if(!S.cats.some(x=>x.name===selCat))selCat=(S.cats[0]||{name:''}).name;
  return `<div class="sheet" id="sheet"><div class="panel" role="dialog" aria-modal="true" aria-labelledby="sheettitle">
   <div class="row"><span class="label" id="sheettitle">${t?'Edit entry':'New expense'}</span><button class="x" data-a="cancel" aria-label="Close">\u2715</button></div>
-  <input id="amt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" value="${t?t.amt:''}" aria-label="Amount">
+  <input id="amt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" value="${t?t.amt:(prefill?prefill.amt:'')}" aria-label="Amount">
   <div class="chips">${S.cats.map((x,i)=>`<button class="chip2 ${x.name===selCat?'on':''}" data-a="chip" data-i="${i}" aria-pressed="${x.name===selCat}">${esc(x.name)}</button>`).join('')}</div>
-  <div class="srow" style="margin-bottom:8px"><input id="date" type="date" value="${dv}" aria-label="Date"><input id="note" placeholder="Note" value="${t?esc(t.note):''}" aria-label="Note"></div>
+  <div class="srow" style="margin-bottom:8px"><input id="date" type="date" value="${dv}" aria-label="Date"><input id="note" placeholder="Note" value="${t?esc(t.note):(prefill?esc(prefill.note):'')}" aria-label="Note"></div>
   <div class="seg" role="group" aria-label="Entry type"><button data-a="type" data-t="daily" class="${formBulk?'':'on'}">Daily</button><button data-a="type" data-t="bulk" class="${formBulk?'on':''}">Bulk</button></div>
   <div class="whatif" id="whatif"></div>
   <button class="cta" data-a="save">${t?'Save changes':'Add expense'}</button>
@@ -568,17 +601,17 @@ function go(v,d){
 function shiftMonth(n){
  const d=new Date(Y,M+n,1);Y=d.getFullYear();M=d.getMonth();openW={};render();
 }
-function openAdd(date){
- sheetOpen=true;editId=null;formBulk=false;sheetDate=date||null;
+function openAdd(date,pf){
+ sheetOpen=true;editId=null;formBulk=false;sheetDate=date||null;prefill=pf||null;
  if(!S.cats.some(c=>c.name===selCat))selCat=(S.cats[0]||{name:''}).name;
  render();
 }
 function openEdit(id){
  const t=S.tx.find(x=>x.id===id);if(!t)return;
- sheetOpen=true;editId=id;formBulk=!!t.bulk;sheetDate=t.date;selCat=t.cat;
+ prefill=null;sheetOpen=true;editId=id;formBulk=!!t.bulk;sheetDate=t.date;selCat=t.cat;
  render();
 }
-function closeSheet(){sheetOpen=false;editId=null;sheetDate=null;render()}
+function closeSheet(){sheetOpen=false;editId=null;sheetDate=null;prefill=null;render()}
 
 function saveSheet(){
  const aEl=document.getElementById('amt'),dEl=document.getElementById('date'),nEl=document.getElementById('note');
@@ -595,6 +628,8 @@ function saveSheet(){
  }else{
   S.tx.push(Object.assign({id:uid()},o));msg='Expense logged';
  }
+ if(prefill&&prefill.wishId)S.wish=S.wish.filter(w=>w.id!==prefill.wishId);
+ prefill=null;
  S.lastCat=selCat;
  save();
  const d=new Date(date+'T00:00');
@@ -767,6 +802,16 @@ function onAppClick(e){
  if(a==='bback'){go('home',-1);return}
  if(a==='day'){openAdd(el.dataset.d);return}
  if(a==='add'){openAdd(null);return}
+ if(a==='waddok'){
+  const n=(document.getElementById('wname').value||'').trim(),p=parseFloat(document.getElementById('wprice').value);
+  if(!n||!(p>0)){showToast('Name and price needed');return}
+  S.wish.push({id:uid(),name:n,price:Math.round(p*100)/100});save();render();return;
+ }
+ if(a==='wdel'){S.wish=S.wish.filter(w=>w.id!==el.dataset.id);save();render();return}
+ if(a==='wbuy'){
+  const w=S.wish.find(x=>x.id===el.dataset.id);if(!w)return;
+  openAdd(null,{amt:w.price,note:w.name,wishId:w.id});return;
+ }
  if(a==='save'){saveSheet();return}
  if(a==='cancel'){closeSheet();return}
  if(a==='back'){go('home',-1);return}

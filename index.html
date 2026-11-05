@@ -86,6 +86,7 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 .wbuy:hover{border-color:var(--acc);color:var(--acc)}
 .wadd{display:grid;grid-template-columns:1fr 78px auto;gap:6px;margin-top:14px}
 .wadd input{padding:9px 10px;font-size:11px}
+.fxadd button{background:var(--acc);color:#000;border:0;border-radius:4px;font-weight:700;cursor:pointer;font-size:9px;letter-spacing:.1em}
 .wadd button{padding:0 12px;font-size:9px;letter-spacing:.1em;background:var(--acc);color:#000;border:0;border-radius:4px;font-weight:700;cursor:pointer}
 .cta{width:100%;height:52px;background:var(--acc);color:#000;border:0;border-radius:8px;font:700 12px var(--mono);letter-spacing:.18em;cursor:pointer;box-shadow:0 0 28px rgba(77,155,255,.25);text-transform:uppercase}
 .cta:active{transform:scale(.99)}
@@ -176,9 +177,10 @@ details.sec[open]>summary{margin-bottom:14px;padding-bottom:12px;border-bottom:1
     <div class="nav" id="nav"><button id="prev" aria-label="Previous month">‹</button><b id="mlabel"></b><button id="next" aria-label="Next month">›</button></div>
   </header>
   <div class="tabs" id="tabs" role="tablist">
-    <button data-v="home" role="tab">OVERVIEW</button>
-    <button data-v="hist" role="tab">HISTORY</button>
-    <button data-v="set" role="tab">SETTINGS</button>
+    <button id="tab-home" data-v="home" role="tab">OVERVIEW</button>
+    <button id="tab-plan" data-v="plan" role="tab">PLAN</button>
+    <button id="tab-hist" data-v="hist" role="tab">HISTORY</button>
+    <button id="tab-set" data-v="set" role="tab">SETTINGS</button>
   </div>
   <div id="app"></div>
 </main>
@@ -221,7 +223,7 @@ function norm(){
   if(t.fixedId)o.fixedId=String(t.fixedId);
   return o;
  }).sort((a,b)=>a.date.localeCompare(b.date));
- S.fixed=S.fixed.filter(f=>f&&f.name&&isFinite(f.amt)).map(f=>({id:String(f.id||uid()),name:String(f.name),amt:Math.round(Math.abs(+f.amt||0)*100)/100,day:Math.min(31,Math.max(1,Math.round(+f.day||1))),cat:String(f.cat||'')}));
+ S.fixed=S.fixed.filter(f=>f&&f.name&&isFinite(f.amt)).map(f=>({id:String(f.id||uid()),name:String(f.name),amt:Math.round(Math.abs(+f.amt||0)*100)/100,cat:String(f.cat||'')}));
  S.lastCat=typeof S.lastCat==='string'?S.lastCat:null;
 }
 try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(fresh(),JSON.parse(r));}catch(e){}
@@ -399,22 +401,41 @@ function weekCardHTML(c){
   <div class="sub" style="justify-content:flex-start"><span class="miniTag ${over?'over':'under'}">${over?'OVER PACE':'UNDER PACE'}</span></div></section>`;
 }
 
-function wishHTML(c){
+function planHTML(c){
  const under=Math.max(c.budget*c.day/c.dim-c.total,0);
- const rows=S.wish.map(w=>{
+ const target=sen(S.goal);
+ const spct=target>0?Math.min(c.budget/target,1):0;
+ const below=target>0&&c.budget<target;
+ const wrows=S.wish.map(w=>{
   const price=sen(w.price),pct=price>0?Math.min(under/price,1):0,can=under>=price;
   return `<div class="wrow">
-   <div class="wtop"><span class="wname">${esc(w.name)}</span><span class="wprice">${rmS(sen(w.price))}</span><button class="x" data-a="wdel" data-id="${w.id}" aria-label="Remove ${esc(w.name)}">✕</button></div>
+   <div class="wtop"><span class="wname">${esc(w.name)}</span><span class="wprice">${rmS(price)}</span><button class="x" data-a="wdel" data-id="${w.id}" aria-label="Remove ${esc(w.name)}">✕</button></div>
    <div class="wbar"><i style="width:${(pct*100).toFixed(0)}%"></i></div>
    <div class="wsub"><span class="miniTag ${can?'under':''}">${can?'AVAILABLE':rmS(price-under)+' SHORT'}</span><button class="wbuy" data-a="wbuy" data-id="${w.id}">BUY</button></div>
   </div>`;
  }).join('');
- return `<section class="panel wish">
-  <div class="row"><span class="label">Wishlist</span><span class="chip">${rmS(under)} AVAILABLE</span></div>
-  ${S.wish.length?rows:'<div class="sub" style="margin-top:12px">NOTHING YET</div>'}
-  <div class="wadd"><input id="wname" placeholder="What do you want?" aria-label="Item name"><input id="wprice" type="number" min="0" inputmode="decimal" placeholder="Price" aria-label="Price"><button data-a="waddok">ADD</button></div>
- </section>`;
+ const frows=S.fixed.map(f=>`<div class="wrow">
+   <div class="wtop"><span class="wname">${esc(f.name)}</span><span class="wprice">${rmS(sen(f.amt))}</span><button class="x" data-a="fdel" data-id="${f.id}" aria-label="Remove ${esc(f.name)}">✕</button></div>
+   <div class="wsub"><span class="miniTag">${esc(f.cat||'—')}</span><button class="wbuy" data-a="fbuy" data-id="${f.id}">BUY</button></div>
+  </div>`).join('');
+ return `<section class="panel">
+   <div class="row"><span class="label">Wishlist</span><span class="chip">${rmS(under)} AVAILABLE</span></div>
+   ${S.wish.length?wrows:'<div class="sub" style="margin-top:12px">NOTHING YET</div>'}
+   <div class="wadd"><input id="wname" placeholder="What do you want?" aria-label="Item name"><input id="wprice" type="number" min="0" inputmode="decimal" placeholder="Price" aria-label="Price"><button data-a="waddok">ADD</button></div>
+  </section>
+  <section class="panel">
+   <div class="row"><span class="label">Fixed monthly</span><span class="chip">${S.fixed.length} ITEM${S.fixed.length===1?'':'S'}</span></div>
+   ${S.fixed.length?frows:'<div class="sub" style="margin-top:12px">NOTHING YET</div>'}
+   <div class="fxadd"><input id="fname" placeholder="Transport" aria-label="Fixed item name"><input id="famt" type="number" min="0" inputmode="decimal" placeholder="10.00" aria-label="Amount"><select id="fcat" aria-label="Category">${S.cats.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('')}</select><button data-a="fadd">ADD</button></div>
+  </section>
+  <section class="panel">
+   <div class="row"><span class="label">Savings</span><span class="chip">${target>0?rmS(target):'OFF'}</span></div>
+   <div class="srow2" style="margin-top:2px"><span>Target</span><input id="goal" type="number" min="0" inputmode="decimal" value="${S.goal}" aria-label="Savings target"></div>
+   <div class="bar" style="margin-top:12px"><i style="width:${(spct*100).toFixed(0)}%"></i></div>
+   <div class="kv"><span>BUDGET ${rmS(c.budget)}</span><span>${target>0?(below?'BELOW TARGET':'TARGET COVERED'):'NO TARGET'}</span></div>
+  </section>`;
 }
+
 
 function homeHTML(c){
  let h='';
@@ -423,7 +444,6 @@ function homeHTML(c){
  if(c.isCur){
   h+=`<div class="duo">${weekCardHTML(c)}${cardHTML('Left this month',c.total,c.budget)}</div>`;
  }
- h+=wishHTML(c);
  h+=allocHTML(c);
  h+=`<button class="cta" data-a="add" style="margin-top:2px">+ Add expense</button>`;
  h+=`<div class="foot"><span>${S.tx.length} entries</span><span>v7</span></div>`;
@@ -518,14 +538,8 @@ function setHTML(c){
   ${S.cats.map((x,i)=>`<div class="srow2"><span class="catname">${esc(x.name)}</span><select data-cb="${i}" aria-label="Bucket for ${esc(x.name)}"><option value="n" ${x.b==='n'?'selected':''}>NEEDS</option><option value="w" ${x.b==='w'?'selected':''}>WANTS</option></select><button class="x" data-a="cdel" data-i="${i}" aria-label="Remove ${esc(x.name)}">\u2715</button></div>`).join('')}
   <div class="srow" style="margin-top:10px"><input id="ncat" placeholder="New category" aria-label="New category name"><select id="nbk" aria-label="Bucket"><option value="n">NEEDS</option><option value="w">WANTS</option></select><button class="ghost" data-a="cadd">ADD</button></div>
   <button class="ghost" data-a="presets" style="margin-top:10px;width:100%">ADD MALAYSIAN PRESETS</button></details>`;
- h+=`<details class="sec" data-sk="fixed" ${openS.fixed?'open':''}><summary><span class="label">Fixed monthly</span><span class="sum">${S.fixed.length?S.fixed.length+' SET':'NONE'}</span></summary>
-  <div class="sub" style="margin:0 0 6px">LOGGED ONCE A MONTH, ON THE DAY YOU PICK, AS BULK</div>
-  ${S.fixed.length?S.fixed.map(f=>`<div class="srow2"><span class="catname">${esc(f.name)}<br><span style="color:#666;font-size:9px;letter-spacing:.1em">${esc(f.cat||'\u2014').toUpperCase()} \u00b7 DAY ${f.day}</span></span><b style="font:500 12px var(--mono)">${rmS(sen(f.amt))}</b><button class="x" data-a="fdel" data-id="${esc(f.id)}" aria-label="Remove ${esc(f.name)}">\u2715</button></div>`).join(''):'<div class="sub" style="margin-top:8px">NONE YET</div>'}
-  <div class="fxadd"><input id="fname" placeholder="Name (Rent)" aria-label="Fixed cost name"><input id="famt" type="number" min="0" inputmode="decimal" placeholder="Amount" aria-label="Fixed cost amount"><select id="fday" aria-label="Day of month">${Array.from({length:31},(_,i)=>`<option value="${i+1}">DAY ${i+1}</option>`).join('')}</select><select id="fcat" aria-label="Category">${S.cats.map(x=>`<option value="${esc(x.name)}" ${x.name===defaultFix?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div>
-  <button class="ghost" data-a="fadd" style="margin-top:8px;width:100%">ADD FIXED COST</button></details>`;
- h+=`<details class="sec" data-sk="goal" ${openS.goal?'open':''}><summary><span class="label">Savings target</span><span class="sum">${S.goal>0?rmS(sen(S.goal)):'OFF'}</span></summary>
-  <div class="srow2"><span>Keep unspent</span><input id="goal" type="number" min="0" inputmode="decimal" value="${S.goal}" aria-label="Savings target"></div>
-  ${S.goal>0?`<div class="sub">KEPT ${rmS(Math.max(c.budget-c.total,0))} OF ${rmS(sen(S.goal))}</div>`:''}</details>`;
+ 
+ 
  h+=`<details class="sec" data-sk="data" ${openS.data?'open':''}><summary><span class="label">Data</span><span class="sum">${S.tx.length} ENTRIES</span></summary>
   <div class="srow"><button class="ghost" data-a="csv" style="flex:1">EXPORT CSV</button><button class="ghost" data-a="cpy" style="flex:1">COPY BACKUP</button></div>
   <textarea id="bk" rows="3" aria-label="Backup text" style="margin-top:8px"></textarea>
@@ -561,6 +575,7 @@ function render(){
  });
  let h='';
  if(view==='home')h=homeHTML(c);
+ else if(view==='plan')h=planHTML(c);
  else if(view==='hist')h=histHTML(c);
  else if(view==='bucket')h=bucketHTML(c);
  else h=setHTML(c);
@@ -648,26 +663,6 @@ function delTx(id){
  });
 }
 
-function postFixed(){
- const d=new Date(),k=keyOf(d.getFullYear(),d.getMonth());
- const dim=daysIn(d.getFullYear(),d.getMonth());
- const list=S.posted[k]||(S.posted[k]=[]);
- const added=[];
- S.fixed.forEach(f=>{
-  if(list.indexOf(f.id)>=0)return;
-  const dd=Math.min(f.day,dim);
-  if(d.getDate()<dd)return;
-  const date=k+'-'+pad(dd);
-  if(S.tx.some(t=>t.fixedId===f.id&&t.date.slice(0,7)===k)){list.push(f.id);return}
-  const cat=S.cats.some(c=>c.name===f.cat)?f.cat:((S.cats[0]||{name:''}).name);
-  S.tx.push({id:uid(),amt:f.amt,cat,date,note:f.name,bulk:true,fixedId:f.id});
-  list.push(f.id);added.push(f);
- });
- if(added.length){
-  save();
-  showToast(added.length===1?`${added[0].name} ${rmS(sen(added[0].amt))} logged`:`${added.length} fixed costs logged`);
- }
-}
 
 function updateWhatif(){
  const box=document.getElementById('whatif');
@@ -711,11 +706,10 @@ function setIncomeNow(v){
 function addFixed(){
  const n=(document.getElementById('fname').value||'').trim();
  const a=parseFloat(document.getElementById('famt').value);
- const day=+document.getElementById('fday').value||1;
  const cat=document.getElementById('fcat').value;
- if(!n||!(a>0)){showToast('Name and amount required');return}
- S.fixed.push({id:uid(),name:n,amt:Math.round(a*100)/100,day,cat});
- save();postFixed();render();showToast(`${n} \u00b7 day ${day}`);
+ if(!n||!(a>0)){showToast('Name and amount needed');return}
+ S.fixed.push({id:uid(),name:n,amt:Math.round(a*100)/100,cat});
+ save();render();showToast('Added to fixed');
 }
 
 function addCat(){
@@ -808,6 +802,10 @@ function onAppClick(e){
   S.wish.push({id:uid(),name:n,price:Math.round(p*100)/100});save();render();return;
  }
  if(a==='wdel'){S.wish=S.wish.filter(w=>w.id!==el.dataset.id);save();render();return}
+ if(a==='fbuy'){
+  const f=S.fixed.find(x=>x.id===el.dataset.id);if(!f)return;
+  openAdd(null,{amt:f.amt,note:f.name,cat:f.cat});return;
+ }
  if(a==='wbuy'){
   const w=S.wish.find(x=>x.id===el.dataset.id);if(!w)return;
   openAdd(null,{amt:w.price,note:w.name,wishId:w.id});return;
@@ -884,7 +882,7 @@ document.addEventListener('keydown',e=>{
 document.getElementById('logo').onclick=()=>go('home',-1);
 document.getElementById('prev').onclick=()=>shiftMonth(-1);
 document.getElementById('next').onclick=()=>shiftMonth(1);
-document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>go(b.dataset.v,b.dataset.v==='home'?-1:1));
+[['tab-home','home',-1],['tab-plan','plan',1],['tab-hist','hist',1],['tab-set','set',1]].forEach(([id,v,d])=>{const el=document.getElementById(id);if(el)el.onclick=()=>go(v,d)});
 
 let tx0=0,ty0=0,tOk=true;
 document.addEventListener('touchstart',e=>{
@@ -900,7 +898,6 @@ document.addEventListener('touchend',e=>{
 },{passive:true});
 
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
-postFixed();
 render();
 if('serviceWorker' in navigator){
  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});

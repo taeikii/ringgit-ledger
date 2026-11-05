@@ -390,16 +390,15 @@ function cardHTML(title,sp,lim,span){
 }
 
 function allocHTML(c){
- const N=24,step=360/N;
+ const SIDE=104,P=SIDE*4;
  const rings=['n','w'].map((k,i)=>{
   const lim=c.bud[k],used=c.spent(1,c.dim,k),lef=lim-used,over=lef<0;
-  const pct=lim>0?used/lim:0,fill=Math.round(Math.min(Math.max(pct,0),1)*N);
-  let segs='';
-  for(let s=0;s<N;s++){
-   segs+=`<rect x="56" y="10" width="7" height="13" rx="1" transform="rotate(${(s*step).toFixed(1)} 60 60)" fill="${s<fill?(over?'#fff':'var(--acc)'):'#161616'}"/>`;
-  }
+  const pct=lim>0?Math.min(Math.max(used/lim,0),1):0;
   return `<button class="ringbtn" data-a="bkt" data-b="${k}" aria-label="${B[k]}: ${Math.round(pct*100)} percent used, ${rmS(Math.abs(lef))} ${over?'over':'left'}">
-   <svg viewBox="0 0 120 120" aria-hidden="true">${segs}</svg>
+   <svg viewBox="0 0 120 120" aria-hidden="true">
+    <rect x="8" y="8" width="${SIDE}" height="${SIDE}" fill="none" stroke="#1b1b1b" stroke-width="7"/>
+    <rect x="8" y="8" width="${SIDE}" height="${SIDE}" fill="none" stroke="${over?'#fff':'var(--acc)'}" stroke-width="7" stroke-dasharray="${P}" stroke-dashoffset="${(P*(1-pct)).toFixed(1)}"/>
+   </svg>
    <span class="ringpct">${Math.round(pct*100)}%</span>
    <div class="ringlbl"><i class="sq ${k==='w'?'w':''}"></i>${B[k]}</div>
    <div class="ringamt">${rmS(Math.abs(lef))} ${over?'OVER':'LEFT'}</div>

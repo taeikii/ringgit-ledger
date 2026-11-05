@@ -541,8 +541,15 @@ function setHTML(c){
   <button class="ghost" data-a="presets" style="margin-top:10px;width:100%">ADD MALAYSIAN PRESETS</button></details>`;
  
  
+ const mm={};S.tx.forEach(t=>{const k=t.date.slice(0,7);mm[k]=mm[k]||{n:0,sum:0};mm[k].n++;mm[k].sum+=sen(t.amt)});
+ const monthRows=Object.keys(mm).sort().reverse().map(k=>{
+  const nm=new Date(k+'-01T00:00').toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+  return `<div class="srow2"><span style="flex:1">${nm}</span><span style="color:#8a8a8a;font-size:9px">${mm[k].n} · ${rmS(mm[k].sum)}</span><button class="ghost" data-a="csvm" data-m="${k}" style="padding:6px 10px;font-size:9px">CSV</button></div>`;
+ }).join('');
  h+=`<details class="sec" data-sk="data" ${openS.data?'open':''}><summary><span class="label">Data</span><span class="sum">${S.tx.length} ENTRIES</span></summary>
-  <div class="srow"><button class="ghost" data-a="csv" style="flex:1">EXPORT CSV</button><button class="ghost" data-a="cpy" style="flex:1">COPY BACKUP</button></div>
+  <div class="sub" style="margin:2px 0 4px">EXPORT BY MONTH</div>
+  ${monthRows||'<div class="sub">NO DATA YET</div>'}
+  <div class="srow" style="margin-top:12px"><button class="ghost" data-a="csv" style="flex:1">EXPORT ALL</button><button class="ghost" data-a="cpy" style="flex:1">COPY BACKUP</button></div>
   <textarea id="bk" rows="3" aria-label="Backup text" style="margin-top:8px"></textarea>
   <button class="ghost" data-a="rst" style="margin-top:8px;width:100%">RESTORE FROM TEXT</button>
   <div class="sub" id="bkmsg" role="status" style="margin-top:8px"></div></details>`;
@@ -737,9 +744,9 @@ function addPresets(){
  else showToast('Presets already added');
 }
 
-function exportCSV(){
+function exportCSV(month){
  const rows=[['date','category','bucket','amount','type','note']];
- S.tx.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>{
+ S.tx.filter(t=>!month||t.date.slice(0,7)===month).slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>{
   rows.push([t.date,t.cat,B[bucketOf(t.cat)],(Math.round(t.amt*100)/100).toFixed(2),t.bulk?'bulk':'daily',t.note]);
  });
  const body=rows.map(r=>r.map(v=>{
@@ -750,10 +757,10 @@ function exportCSV(){
   const blob=new Blob(['\ufeff'+body],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download='ringgit-ledger-'+fmt(now)+'.csv';
+  a.download='ringgit-ledger-'+(month||fmt(now))+'.csv';
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  showToast('CSV exported');
+  showToast(month?'Month exported':'CSV exported');
  }catch(e){showToast('Export failed here')}
 }
 
@@ -848,6 +855,7 @@ function onAppClick(e){
  }
  if(a==='presets'){addPresets();return}
  if(a==='csv'){exportCSV();return}
+ if(a==='csvm'){exportCSV(el.dataset.m);return}
  if(a==='cpy'){copyBackup();return}
  if(a==='rst'){restoreBackup();return}
  if(a==='bincok'){

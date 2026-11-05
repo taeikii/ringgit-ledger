@@ -89,8 +89,9 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 .fxadd button{background:var(--acc);color:#000;border:0;border-radius:4px;font-weight:700;cursor:pointer;font-size:9px;letter-spacing:.1em}
 .wadd button{padding:0 12px;font-size:9px;letter-spacing:.1em;background:var(--acc);color:#000;border:0;border-radius:4px;font-weight:700;cursor:pointer}
 .cardfoot{display:flex;justify-content:flex-end;margin-top:12px}
-.plus{width:34px;height:34px;padding:0;display:grid;place-items:center;border:1px solid var(--line2);background:#0b0b0b;color:var(--acc);border-radius:6px;font:400 18px/1 var(--mono);cursor:pointer}
-.plus:hover,.plus:active{border-color:var(--acc);background:var(--acc-soft)}
+.plus{width:32px;height:32px;padding:0;display:grid;place-items:center;border:0;background:none;color:var(--acc);font:400 20px/1 var(--mono);cursor:pointer;margin:-8px -8px -8px 0}
+.rowend{display:flex;align-items:center;gap:8px;min-width:0}
+.plus:active{opacity:.55}
 .cta{width:100%;height:52px;background:var(--acc);color:#000;border:0;border-radius:8px;font:700 12px var(--mono);letter-spacing:.18em;cursor:pointer;box-shadow:0 0 28px rgba(77,155,255,.25);text-transform:uppercase}
 .cta:active{transform:scale(.99)}
 .ghost{background:#0b0b0b;border:1px solid var(--line2);color:#d8d8d8;border-radius:6px;padding:10px 14px;font:500 10px var(--mono);letter-spacing:.12em;cursor:pointer;text-transform:uppercase}
@@ -422,20 +423,17 @@ function planHTML(c){
    <div class="wsub"><span class="miniTag">${esc(f.cat||'—')}</span><button class="wbuy" data-a="fbuy" data-id="${f.id}">BUY</button></div>
   </div>`).join('');
  return `<section class="panel">
-   <div class="row"><span class="label">Wishlist</span><span class="chip">${rmS(under)} AVAILABLE</span></div>
+   <div class="row"><span class="label">Wishlist</span><span class="rowend"><span class="chip">${rmS(under)} AVAILABLE</span><button class="plus" data-a="form" data-t="wish" aria-label="Add wishlist item">+</button></span></div>
    ${S.wish.length?wrows:'<div class="sub" style="margin-top:12px">NOTHING YET</div>'}
-   <div class="cardfoot"><button class="plus" data-a="form" data-t="wish" aria-label="Add wishlist item">+</button></div>
   </section>
   <section class="panel">
-   <div class="row"><span class="label">Fixed monthly</span><span class="chip">${S.fixed.length} ITEM${S.fixed.length===1?'':'S'}</span></div>
+   <div class="row"><span class="label">Fixed monthly</span><span class="rowend"><span class="chip">${S.fixed.length} ITEM${S.fixed.length===1?'':'S'}</span><button class="plus" data-a="form" data-t="fixed" aria-label="Add fixed item">+</button></span></div>
    ${S.fixed.length?frows:'<div class="sub" style="margin-top:12px">NOTHING YET</div>'}
-   <div class="cardfoot"><button class="plus" data-a="form" data-t="fixed" aria-label="Add fixed item">+</button></div>
   </section>
   <section class="panel">
-   <div class="row"><span class="label">Savings</span><span class="chip">${target>0?rmS(target):'OFF'}</span></div>
+   <div class="row"><span class="label">Savings</span><span class="rowend"><span class="chip">${target>0?rmS(target):'OFF'}</span><button class="plus" data-a="form" data-t="goal" aria-label="Set savings target">+</button></span></div>
    <div class="bar" style="margin-top:12px"><i style="width:${(spct*100).toFixed(0)}%"></i></div>
    <div class="kv"><span>BUDGET ${rmS(c.budget)}</span><span>${target>0?(below?'BELOW TARGET':'TARGET COVERED'):'NO TARGET'}</span></div>
-   <div class="cardfoot"><button class="plus" data-a="form" data-t="goal" aria-label="Set savings target">+</button></div>
   </section>`;
 }
 

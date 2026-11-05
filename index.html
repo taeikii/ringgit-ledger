@@ -392,8 +392,8 @@ function allocHTML(c){
 }
 
 function weekCardHTML(c){
- const exp=c.weekExpected,spent=c.weekToDate,d=exp-spent,over=d<0;
- return `<section class="panel"><div class="row"><span class="label">Pace</span></div>
+ const exp=c.budget*c.day/c.dim,d=exp-c.total,over=d<0;
+ return `<section class="panel"><div class="row"><span class="label">Pace this month</span></div>
   <div class="num2 ${over?'over':''}">${rmS(Math.abs(d))}</div>
   <div class="bar" style="background:transparent" aria-hidden="true"></div>
   <div class="sub" style="justify-content:flex-start"><span class="miniTag ${over?'over':'under'}">${over?'OVER PACE':'UNDER PACE'}</span></div></section>`;
@@ -406,7 +406,7 @@ function wishHTML(c){
   return `<div class="wrow">
    <div class="wtop"><span class="wname">${esc(w.name)}</span><span class="wprice">${rmS(sen(w.price))}</span><button class="x" data-a="wdel" data-id="${w.id}" aria-label="Remove ${esc(w.name)}">✕</button></div>
    <div class="wbar"><i style="width:${(pct*100).toFixed(0)}%"></i></div>
-   <div class="wsub"><span class="miniTag ${can?'under':''}">${can?'CAN BUY':rmS(price-under)+' SHORT'}</span><button class="wbuy" data-a="wbuy" data-id="${w.id}">BUY</button></div>
+   <div class="wsub"><span class="miniTag ${can?'under':''}">${can?'AVAILABLE':rmS(price-under)+' SHORT'}</span><button class="wbuy" data-a="wbuy" data-id="${w.id}">BUY</button></div>
   </div>`;
  }).join('');
  return `<section class="panel wish">

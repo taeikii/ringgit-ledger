@@ -385,7 +385,7 @@ function bannerHTML(c){
 
 function cardHTML(title,sp,lim,span){
  const rem=Math.max(lim-sp,0),keep=lim>0?(rem>0?rem/lim:1):0;
- return `<section class="panel ${span?'span':''} ${lim-sp<0?'t-bad':'t-good'}"><div class="label">${title}</div>
+ return `<section class="panel ${span?'span':''} ${lim-sp<0?'t-bad':''}"><div class="label">${title}</div>
   <div class="num2">${rmS(lim-sp)}</div>
   <div class="bar ${lim-sp<0?'over':''}"><i style="width:${Math.round(keep*100)}%"></i></div>
   <div class="sub"><span>SPENT ${rmS(sp).replace('RM ','')}</span><span>OF ${rmS(lim).replace('RM ','')}</span></div></section>`;
@@ -395,7 +395,7 @@ function allocHTML(c){
  return ['n','w'].map((k,i)=>{
   const lim=c.bud[k],used=c.spent(1,c.dim,k),lef=lim-used,over=lef<0;
   const keep=lim>0?(over?1:Math.max(lef,0)/lim):0;
-  return `<section class="panel ${over?'t-bad':'t-good'}" data-a="bkt" data-b="${k}" role="button" tabindex="0" aria-label="${B[k]}, ${rmS(Math.abs(lef))} ${over?'over':'left'}">
+  return `<section class="panel ${over?'t-bad':''}" data-a="bkt" data-b="${k}" role="button" tabindex="0" aria-label="${B[k]}, ${rmS(Math.abs(lef))} ${over?'over':'left'}">
    <div class="row"><span class="label"><i class="sq ${k==='w'?'w':''}"></i>${B[k]} ${S.split[i]}%</span><span class="aval ${over?'bad':''}">${rmS(lef)}</span></div>
    <div class="bar ${over?'over':''}" style="margin-top:12px"><i style="width:${(keep*100).toFixed(1)}%"></i></div>
    <div class="sub"><span>SPENT ${rmS(used)}</span><span>OF ${rmS(lim)}</span></div>
@@ -428,7 +428,7 @@ function planHTML(c){
    <div class="row"><span class="label">Fixed monthly</span><span class="rowend"><span class="chip">${S.fixed.length} ITEM${S.fixed.length===1?'':'S'}</span><button class="plus" data-a="form" data-t="fixed" aria-label="Add fixed item">+</button></span></div>
    ${S.fixed.length?frows:'<div class="sub" style="margin-top:12px">NOTHING YET</div>'}
   </section>
-  <section class="panel ${target>0?(below?'t-bad':'t-good'):''}">
+  <section class="panel ${target>0&&below?'t-bad':''}">
    <div class="row"><span class="label">Savings</span><span class="rowend"><span class="chip">${target>0?rmS(target):'OFF'}</span><button class="plus" data-a="form" data-t="goal" aria-label="Set savings target">+</button></span></div>
    <div class="bar" style="margin-top:12px"><i style="width:${(spct*100).toFixed(0)}%"></i></div>
    <div class="kv"><span>BUDGET ${rmS(c.budget)}</span><span>${target>0?(below?'<b class="bad">BELOW TARGET</b>':'<b class="good">TARGET COVERED</b>'):'NO TARGET'}</span></div>

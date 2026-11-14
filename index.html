@@ -16,7 +16,7 @@
   color-scheme:dark;
   --bg:#050505;--panel:#0a0a0a;--line:#1e1e1e;--line2:#2b2b2b;
   --ink:#ededed;--mute:#a8a8a8;--dim:#828282;
-  --acc:#4d9bff;--acc-soft:rgba(77,155,255,.13);
+  --acc:#4d9bff;--acc-soft:rgba(77,155,255,.13);--good:#4ade80;--bad:#ff5a5a;
   --sans:'Silkscreen',system-ui,sans-serif;
   --mono:'Silkscreen',ui-monospace,monospace;
   --ui:ui-monospace,'Cascadia Mono','SF Mono','Segoe UI Mono',Consolas,monospace;
@@ -40,10 +40,10 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 .label{font:400 10px var(--ui);letter-spacing:.07em;color:var(--mute);text-transform:uppercase}
 .chip{font:500 10px var(--ui);letter-spacing:.1em;color:#b4b4b4;border:1px solid var(--line2);padding:4px 8px;border-radius:4px;white-space:nowrap;text-transform:uppercase}
 .big{font:400 clamp(36px,12.4vw,62px)/1.08 var(--mono);letter-spacing:0;color:var(--acc);margin:16px 0 18px;text-shadow:0 0 34px rgba(77,155,255,.3);overflow-wrap:anywhere}
-.hero.over .big{color:#fff;text-shadow:none}
+.hero.over .big{color:var(--bad);text-shadow:none}
 .bar{height:6px;background:#151515;border-radius:3px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--acc);border-radius:3px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
-.bar.over i{background:#fff}
+.bar.over i{background:var(--bad)}
 .kv{display:flex;justify-content:space-between;font:400 10px var(--ui);letter-spacing:.06em;color:#a6a6a6;margin-top:8px;text-transform:uppercase}
 .tag{display:inline-block;font:700 10px var(--mono);letter-spacing:.12em;padding:5px 8px;border-radius:3px;text-transform:uppercase}
 .tag.over{background:#fff;color:#000}
@@ -59,8 +59,8 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 .duo .panel{margin:0;padding:15px}
 .num2.over{color:#fff}
 .miniTag{font:400 8px var(--mono);letter-spacing:.12em;padding:3px 5px;border-radius:2px;border:1px solid var(--line2);color:var(--mute)}
-.miniTag.under{border-color:rgba(77,155,255,.5);color:var(--acc)}
-.miniTag.over{background:#fff;color:#000;border-color:#fff}
+.miniTag.under{border-color:rgba(74,222,128,.45);color:var(--good)}
+.miniTag.over{background:rgba(255,90,90,.12);color:var(--bad);border-color:rgba(255,90,90,.45)}
 .num2{font:500 clamp(18px,5vw,25px)/1.1 var(--mono);letter-spacing:-.02em;margin:11px 0 12px;overflow-wrap:anywhere}
 .sub{font:400 9px var(--ui);letter-spacing:.01em;color:#9a9a9a;margin-top:8px;display:flex;justify-content:space-between;gap:6px;text-transform:uppercase;white-space:nowrap;overflow:hidden}
 .alloc .arow{display:flex;align-items:center;gap:9px;padding:12px 0;cursor:pointer;border-radius:4px}
@@ -70,7 +70,7 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 .aname{font:500 10px var(--mono);letter-spacing:.12em;color:#cfcfcf;flex:1;text-transform:uppercase}
 .aval{font:500 12px var(--mono);color:#fff;white-space:nowrap}
 .aval.neg{color:#fff}
-.mini{font:700 8.5px var(--ui);letter-spacing:.1em;background:#fff;color:#000;padding:3px 5px;border-radius:2px;margin-left:6px;vertical-align:2px}
+.mini{font:700 8.5px var(--ui);letter-spacing:.1em;background:rgba(255,90,90,.14);color:var(--bad);padding:3px 5px;border-radius:2px;margin-left:6px;vertical-align:2px}
 .chev{color:#4a4a4a;font-size:14px;line-height:1}
 .alloc .bar{margin:0 0 0 16px}
 .alloc .sub{margin:6px 0 16px 16px}
@@ -166,7 +166,8 @@ details.sec[open]>summary{margin-bottom:14px;padding-bottom:12px;border-bottom:1
 .seg button{flex:1;background:#0b0b0b;border:1px solid var(--line2);color:#8a8a8a;border-radius:6px;padding:10px;font:500 10px var(--mono);letter-spacing:.14em;cursor:pointer;text-transform:uppercase}
 .seg button.on{background:var(--acc);border-color:var(--acc);color:#000;font-weight:700}
 .whatif{font:400 10px var(--ui);letter-spacing:.04em;color:#7e7e7e;line-height:1.5;margin:0;min-height:14px}
-.whatif.bad{color:#fff}
+.whatif.bad{color:var(--bad)}
+.good{color:var(--good)}
 .sheet .cta{margin-top:4px}
 .del{display:block;width:100%;background:none;border:0;color:#6a6a6a;font:500 9.5px var(--ui);letter-spacing:.14em;padding:14px 0 2px;cursor:pointer;text-transform:uppercase}
 #toastwrap{position:fixed;left:0;right:0;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;justify-content:center;pointer-events:none;padding:0 16px}
@@ -380,7 +381,7 @@ function bannerHTML(c){
 }
 
 function cardHTML(title,sp,lim,span){
- const rem=Math.max(lim-sp,0),keep=lim>0?rem/lim:0;
+ const rem=Math.max(lim-sp,0),keep=lim>0?(rem>0?rem/lim:1):0;
  return `<section class="panel ${span?'span':''}"><div class="label">${title}</div>
   <div class="num2">${rmS(lim-sp)}</div>
   <div class="bar ${lim-sp<0?'over':''}"><i style="width:${Math.round(keep*100)}%"></i></div>
@@ -391,11 +392,11 @@ function allocHTML(c){
  return `<section class="panel"><div class="row" style="margin-bottom:6px"><span class="label">Allocation</span><span class="chip">${S.split[0]} / ${S.split[1]}</span></div>
   ${['n','w'].map((k,i)=>{
    const lim=c.bud[k],used=c.spent(1,c.dim,k),lef=lim-used,over=lef<0;
-   const keep=lim>0?Math.max(lef,0)/lim:0;
+   const keep=lim>0?(over?1:Math.max(lef,0)/lim):0;
    return `<div class="alloc">
     <div class="arow" data-a="bkt" data-b="${k}" role="button" tabindex="0">
       <i class="sq ${k==='w'?'w':''}"></i><span class="aname">${B[k]} ${S.split[i]}%</span>
-      <span class="aval">${rmS(lef)}${over?'<span class="mini">OVER</span>':''}</span><span class="chev">\u203a</span>
+      <span class="aval${over?' bad':''}">${rmS(lef)}${over?'<span class="mini">OVER</span>':''}</span><span class="chev">\u203a</span>
     </div>
     <div class="bar ${over?'over':''}"><i style="width:${(keep*100).toFixed(1)}%"></i></div>
     <div class="sub"><span>SPENT ${rmS(used)}</span><span>OF ${rmS(lim)}</span></div>
@@ -421,7 +422,7 @@ function planHTML(c){
   return `<div class="wrow">
    <div class="wtop"><span class="wname">${esc(w.name)}</span><span class="wprice">${rmS(price)}</span><button class="x" data-a="wdel" data-id="${w.id}" aria-label="Remove ${esc(w.name)}">✕</button></div>
    <div class="wbar"><i style="width:${(pct*100).toFixed(0)}%"></i></div>
-   <div class="wsub"><span class="miniTag ${can?'under':''}">${can?'AVAILABLE':rmS(price-under)+' SHORT'}</span><button class="wbuy" data-a="wbuy" data-id="${w.id}">BUY</button></div>
+   <div class="wsub"><span class="miniTag ${can?'under':'over'}">${can?'AVAILABLE':rmS(price-under)+' SHORT'}</span><button class="wbuy" data-a="wbuy" data-id="${w.id}">BUY</button></div>
   </div>`;
  }).join('');
  const frows=S.fixed.map(f=>`<div class="wrow">
@@ -439,7 +440,7 @@ function planHTML(c){
   <section class="panel">
    <div class="row"><span class="label">Savings</span><span class="rowend"><span class="chip">${target>0?rmS(target):'OFF'}</span><button class="plus" data-a="form" data-t="goal" aria-label="Set savings target">+</button></span></div>
    <div class="bar" style="margin-top:12px"><i style="width:${(spct*100).toFixed(0)}%"></i></div>
-   <div class="kv"><span>BUDGET ${rmS(c.budget)}</span><span>${target>0?(below?'BELOW TARGET':'TARGET COVERED'):'NO TARGET'}</span></div>
+   <div class="kv"><span>BUDGET ${rmS(c.budget)}</span><span>${target>0?(below?'<b class="bad">BELOW TARGET</b>':'<b class="good">TARGET COVERED</b>'):'NO TARGET'}</span></div>
   </section>`;
 }
 

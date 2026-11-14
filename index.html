@@ -94,6 +94,8 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 .plus:active{opacity:.55}
 .bs{padding:6px 10px;font-size:9px;letter-spacing:.08em}
 .linkbtn{background:none;border:0;color:var(--acc);font:400 9px var(--mono);letter-spacing:.12em;padding:14px 0 2px;cursor:pointer;text-transform:uppercase}
+.twosel{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.datesm{width:auto;max-width:132px;padding:6px 8px;font-size:10px;border-radius:4px;letter-spacing:.04em}
 .cta{width:100%;height:52px;background:var(--acc);color:#000;border:0;border-radius:8px;font:700 12px var(--mono);letter-spacing:.18em;cursor:pointer;box-shadow:0 0 28px rgba(77,155,255,.25);text-transform:uppercase}
 .cta:active{transform:scale(.99)}
 .ghost{background:#0b0b0b;border:1px solid var(--line2);color:#d8d8d8;border-radius:6px;padding:10px 14px;font:500 10px var(--mono);letter-spacing:.12em;cursor:pointer;text-transform:uppercase}
@@ -585,15 +587,18 @@ function sheetHTML(c){
  const dv=sheetDate||(c.isCur?fmt(now):c.key+'-01');
  if(!S.cats.some(x=>x.name===selCat))selCat=(S.cats[0]||{name:''}).name;
  return `<div class="sheet" id="sheet"><div class="panel" role="dialog" aria-modal="true" aria-labelledby="sheettitle">
-  <div class="row"><span class="label" id="sheettitle">${t?'Edit entry':'New expense'}</span><button class="x" data-a="cancel" aria-label="Close">\u2715</button></div>
+  <div class="row"><span class="label" id="sheettitle">${t?'Edit entry':'New expense'}</span>
+   <span class="rowend"><input id="date" class="datesm" type="date" value="${dv}" aria-label="Date"><button class="x" data-a="cancel" aria-label="Close">✕</button></span></div>
   <input id="amt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" value="${t?t.amt:(prefill?prefill.amt:'')}" aria-label="Amount">
-  <div class="chips">${S.cats.map((x,i)=>`<button class="chip2 ${x.name===selCat?'on':''}" data-a="chip" data-i="${i}" aria-pressed="${x.name===selCat}">${esc(x.name)}</button>`).join('')}</div>
-  <div class="srow" style="margin-bottom:8px"><input id="date" type="date" value="${dv}" aria-label="Date"><input id="note" placeholder="Note" value="${t?esc(t.note):(prefill?esc(prefill.note):'')}" aria-label="Note"></div>
-  <div class="seg" role="group" aria-label="Entry type"><button data-a="type" data-t="daily" class="${formBulk?'':'on'}">Daily</button><button data-a="type" data-t="bulk" class="${formBulk?'on':''}">Bulk</button></div>
-   <div class="seg" role="group" aria-label="Bucket"><button data-a="bucket" data-b="n" class="${formBucket==='n'?'on':''}">Needs</button><button data-a="bucket" data-b="w" class="${formBucket==='w'?'on':''}">Wants</button></div>
+  <input id="note" placeholder="Note" value="${t?esc(t.note):(prefill?esc(prefill.note):'')}" aria-label="Note">
+  <div class="twosel">
+   <select id="scat" aria-label="Category">${S.cats.map(x=>`<option value="${esc(x.name)}" ${x.name===selCat?'selected':''}>${esc(x.name)}</option>`).join('')}</select>
+   <select id="sbucket" aria-label="Bucket"><option value="n" ${formBucket==='n'?'selected':''}>Needs</option><option value="w" ${formBucket==='w'?'selected':''}>Wants</option></select>
+  </div>
+  <div class="seg" role="group" aria-label="Entry type" style="margin-top:10px"><button data-a="type" data-t="daily" class="${formBulk?'':'on'}">Daily</button><button data-a="type" data-t="bulk" class="${formBulk?'on':''}">Bulk</button></div>
   <div class="whatif" id="whatif"></div>
   <button class="cta" data-a="save">${t?'Save changes':'Add expense'}</button>
-  ${t?`<button class="del" data-a="deledit">Delete this entry</button>`:''}
+  ${t?'<button class="del" data-a="deledit">Delete this entry</button>':''}
  </div></div>`;
 }
 
@@ -897,6 +902,8 @@ function onAppClick(e){
 
 function onAppChange(e){
  const t=e.target;
+ if(t.id==='scat'){selCat=t.value;formBucket=(S.cats.find(c=>c.name===selCat)||{b:'n'}).b;const bs=document.getElementById('sbucket');if(bs)bs.value=formBucket;updateWhatif();return}
+ if(t.id==='sbucket'){formBucket=t.value;return}
  if(t.id==='date'){sheetDate=t.value;updateWhatif();return}
  if(t.id==='inc'){
   const v=t.value.trim();

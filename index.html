@@ -225,7 +225,8 @@ function norm(){
  if(!Array.isArray(S.cats)||!S.cats.length)S.cats=fresh().cats;
  S.cats=S.cats.filter(c=>c&&typeof c.name==='string'&&c.name.trim()).map(c=>({name:c.name,b:c.b==='n'?'n':'w'}));
  S.tx=S.tx.filter(t=>t&&typeof t.date==='string'&&isFinite(t.amt)).map(t=>{
-  const o={id:String(t.id||uid()),amt:Math.round((+t.amt||0)*100)/100,cat:String(t.cat||''),date:t.date.slice(0,10),note:String(t.note||''),bulk:!!t.bulk};
+  const catName=String(t.cat||'');
+  const o={id:String(t.id||uid()),amt:Math.round((+t.amt||0)*100)/100,cat:catName,date:t.date.slice(0,10),note:String(t.note||''),bulk:!!t.bulk,b:(t.b==='n'||t.b==='w')?t.b:((S.cats.find(c=>c.name===catName)||{b:'w'}).b)};
   if(t.fixedId)o.fixedId=String(t.fixedId);
   return o;
  }).sort((a,b)=>a.date.localeCompare(b.date));
@@ -239,7 +240,7 @@ const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const now=new Date();
 let Y=now.getFullYear(),M=now.getMonth(),view='home',dir=0,first=true;
 let openW={},openS={income:true},bkt='n';
-let sheetOpen=false,editId=null,sheetDate=null,formBulk=false,prefill=null,formOpen=null,restoreOpen=false;
+let sheetOpen=false,editId=null,sheetDate=null,formBulk=false,formBucket='n',prefill=null,formOpen=null,restoreOpen=false;
 let selCat=(S.cats.find(c=>c.name===S.lastCat)||S.cats[0]||{name:''}).name;
 let q='',fcat='';
 let toastTimer=null;
@@ -260,7 +261,7 @@ function calc(){
  const dnum=t=>+t.date.slice(8);
  const sum=arr=>arr.reduce((s,t)=>s+sen(t.amt),0);
  const pick=(a,b,f)=>sum(tx.filter(t=>{const d=dnum(t);return d>=a&&d<=b&&f(t)}));
- const spent=(a,b,k)=>pick(a,b,t=>!k||bucketOf(t.cat)===k);
+ const spent=(a,b,k)=>pick(a,b,t=>!k||t.b===k);
  const daily=(a,b)=>pick(a,b,t=>!t.bulk);
  const bulkSum=(a,b)=>pick(a,b,t=>t.bulk);
  const total=sum(tx),bulkAll=bulkSum(1,dim);
@@ -322,7 +323,7 @@ function tomorrowWith(ds,amtSen,isBulk){
 }
 
 function txRow(t,withDate){
- const b=bucketOf(t.cat);
+ const b=t.b||bucketOf(t.cat);
  const d=withDate?`<span class="txd">${new Date(t.date+'T00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}</span> \u00b7 `:'';
  return `<div class="tx" data-a="edit" data-id="${esc(t.id)}" role="button" tabindex="0" aria-label="Edit ${esc(t.cat)} ${rmS(sen(t.amt))}">
   <span class="txl">${d}<span class="cat">${esc(t.cat)}</span>${t.note?' \u00b7 '+esc(t.note):''}</span>
@@ -508,7 +509,7 @@ function histHTML(c){
 }
 
 function bucketHTML(c){
- const list=c.tx.filter(t=>bucketOf(t.cat)===bkt);
+ const list=c.tx.filter(t=>t.b===bkt);
  const used=c.spent(1,c.dim,bkt),lim=c.bud[bkt],lef=lim-used,over=lef<0;
  const keep=lim>0?Math.max(lef,0)/lim:0;
  return `<button class="ghost" data-a="bback" style="margin-bottom:12px">\u2039 BACK</button>
@@ -589,6 +590,7 @@ function sheetHTML(c){
   <div class="chips">${S.cats.map((x,i)=>`<button class="chip2 ${x.name===selCat?'on':''}" data-a="chip" data-i="${i}" aria-pressed="${x.name===selCat}">${esc(x.name)}</button>`).join('')}</div>
   <div class="srow" style="margin-bottom:8px"><input id="date" type="date" value="${dv}" aria-label="Date"><input id="note" placeholder="Note" value="${t?esc(t.note):(prefill?esc(prefill.note):'')}" aria-label="Note"></div>
   <div class="seg" role="group" aria-label="Entry type"><button data-a="type" data-t="daily" class="${formBulk?'':'on'}">Daily</button><button data-a="type" data-t="bulk" class="${formBulk?'on':''}">Bulk</button></div>
+   <div class="seg" role="group" aria-label="Bucket"><button data-a="bucket" data-b="n" class="${formBucket==='n'?'on':''}">Needs</button><button data-a="bucket" data-b="w" class="${formBucket==='w'?'on':''}">Wants</button></div>
   <div class="whatif" id="whatif"></div>
   <button class="cta" data-a="save">${t?'Save changes':'Add expense'}</button>
   ${t?`<button class="del" data-a="deledit">Delete this entry</button>`:''}
@@ -648,13 +650,14 @@ function shiftMonth(n){
  const d=new Date(Y,M+n,1);Y=d.getFullYear();M=d.getMonth();openW={};render();
 }
 function openAdd(date,pf){
- sheetOpen=true;editId=null;formBulk=false;sheetDate=date||null;prefill=pf||null;
+ sheetOpen=true;editId=null;formBulk=false;sheetDate=date||null;prefill=pf||null;if(pf&&pf.cat&&S.cats.some(c=>c.name===pf.cat))selCat=pf.cat;
+ formBucket=((S.cats.find(c=>c.name===selCat)||{b:'n'}).b);
  if(!S.cats.some(c=>c.name===selCat))selCat=(S.cats[0]||{name:''}).name;
  render();
 }
 function openEdit(id){
  const t=S.tx.find(x=>x.id===id);if(!t)return;
- prefill=null;sheetOpen=true;editId=id;formBulk=!!t.bulk;sheetDate=t.date;selCat=t.cat;
+ prefill=null;sheetOpen=true;editId=id;formBulk=!!t.bulk;sheetDate=t.date;selCat=t.cat;formBucket=t.b||bucketOf(t.cat);
  render();
 }
 function closeSheet(){sheetOpen=false;editId=null;sheetDate=null;prefill=null;render()}
@@ -666,7 +669,7 @@ function saveSheet(){
   if(!(amt>0)){aEl.focus();if(aEl.select)aEl.select()}
   return;
  }
- const o={amt:Math.round(amt*100)/100,cat:selCat,date,note,bulk:formBulk};
+ const o={amt:Math.round(amt*100)/100,cat:selCat,date,note,bulk:formBulk,b:formBucket};
  let msg='Entry saved';
  if(editId){
   const t=S.tx.find(x=>x.id===editId);
@@ -754,7 +757,7 @@ function addPresets(){
 function exportCSV(month){
  const rows=[['date','category','bucket','amount','type','note']];
  S.tx.filter(t=>!month||t.date.slice(0,7)===month).slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>{
-  rows.push([t.date,t.cat,B[bucketOf(t.cat)],(Math.round(t.amt*100)/100).toFixed(2),t.bulk?'bulk':'daily',t.note]);
+  rows.push([t.date,t.cat,B[t.b||bucketOf(t.cat)],(Math.round(t.amt*100)/100).toFixed(2),t.bulk?'bulk':'daily',t.note]);
  });
  const body=rows.map(r=>r.map(v=>{
   const s=String(v==null?'':v);
@@ -807,11 +810,16 @@ function onAppClick(e){
  if(a==='chip'){
   const i=+el.dataset.i;
   if(!S.cats[i])return;
-  selCat=S.cats[i].name;
+  selCat=S.cats[i].name;formBucket=S.cats[i].b;document.querySelectorAll('.seg [data-a="bucket"]').forEach(b=>b.classList.toggle('on',b.dataset.b===formBucket));
   document.querySelectorAll('.chip2').forEach(c=>{
    const on=c.dataset.i===String(i);
    c.classList.toggle('on',on);c.setAttribute('aria-pressed',on);
   });
+  return;
+ }
+ if(a==='bucket'){
+  formBucket=el.dataset.b;
+  document.querySelectorAll('.seg [data-a="bucket"]').forEach(b=>b.classList.toggle('on',b.dataset.b===formBucket));
   return;
  }
  if(a==='type'){
